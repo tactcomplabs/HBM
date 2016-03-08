@@ -43,7 +43,7 @@ class MultiChannelMemorySystem : public SimulatorObject
 {
 	public: 
 
-	MultiChannelMemorySystem(const string &dev, const string &sys, const string &pwd, const string &trc, const string &log, unsigned megsOfMemory, string *visFilename=NULL, const IniReader::OverrideMap *paramOverrides=NULL);
+	MultiChannelMemorySystem(const string &dev, const string &sys, const string &pwd, const string &trc, unsigned megsOfMemory, string *visFilename=NULL, const IniReader::OverrideMap *paramOverrides=NULL);
 		virtual ~MultiChannelMemorySystem();
 			bool addTransaction(Transaction *trans);
 			bool addTransaction(const Transaction &trans);
@@ -77,7 +77,6 @@ class MultiChannelMemorySystem : public SimulatorObject
 		string deviceIniFilename;
 		string systemIniFilename;
 		string traceFilename;
-    string logFilename;
 		string pwd;
 		string *visFilename;
 		ClockDomain::ClockDomainCrosser clockDomainCrosser; 

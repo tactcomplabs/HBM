@@ -30,7 +30,6 @@
 #include <errno.h> 
 #include <sstream> //stringstream
 #include <stdlib.h> // getenv()
-#include <assert.h>
 // for directory operations 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -44,10 +43,10 @@
 using namespace DRAMSim; 
 
 
-MultiChannelMemorySystem::MultiChannelMemorySystem(const string &deviceIniFilename_, const string &systemIniFilename_, const string &pwd_, const string &traceFilename_, const string &logFilename_, unsigned megsOfMemory_, string *visFilename_, const IniReader::OverrideMap *paramOverrides)
+MultiChannelMemorySystem::MultiChannelMemorySystem(const string &deviceIniFilename_, const string &systemIniFilename_, const string &pwd_, const string &traceFilename_, unsigned megsOfMemory_, string *visFilename_, const IniReader::OverrideMap *paramOverrides)
 	:megsOfMemory(megsOfMemory_), deviceIniFilename(deviceIniFilename_),
 	systemIniFilename(systemIniFilename_), traceFilename(traceFilename_),
-  logFilename(logFilename_), pwd(pwd_), visFilename(visFilename_), 
+	pwd(pwd_), visFilename(visFilename_), 
 	clockDomainCrosser(new ClockDomain::Callback<MultiChannelMemorySystem, void>(this, &MultiChannelMemorySystem::actual_update)),
 	csvOut(new CSVWriter(visDataOut))
 {
@@ -292,16 +291,8 @@ void MultiChannelMemorySystem::InitOutputFiles(string traceFilename)
 	{
 		// cerr << "vis file output disabled\n";
 	}
-
 #ifdef LOG_OUTPUT
-  string path;
-  if (!(pwd.length() > 0)) {
-    path = pwd + "/"; 
-    mkdirIfNotExist(path); // create the directories if they don't exist 
-	}
-
-  string dramsimLogFilename = path + logFilename;
-
+	string dramsimLogFilename("dramsim");
 	if (sim_description != NULL)
 	{
 		dramsimLogFilename += "."+sim_description_str; 
@@ -541,8 +532,8 @@ int MultiChannelMemorySystem::getIniFloat(const std::string& field, float *val)
 }
 
 namespace DRAMSim {
-MultiChannelMemorySystem *getMemorySystemInstance(const string &dev, const string &sys, const string &pwd, const string &trc, const string &log, unsigned megsOfMemory, string *visfilename) 
+MultiChannelMemorySystem *getMemorySystemInstance(const string &dev, const string &sys, const string &pwd, const string &trc, unsigned megsOfMemory, string *visfilename) 
 {
-	return new MultiChannelMemorySystem(dev, sys, pwd, trc, log, megsOfMemory, visfilename);
+	return new MultiChannelMemorySystem(dev, sys, pwd, trc, megsOfMemory, visfilename);
 }
 }
