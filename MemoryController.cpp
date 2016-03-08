@@ -51,7 +51,6 @@ extern unsigned IDD3N;
 extern unsigned IDD4W;
 extern unsigned IDD4R;
 extern unsigned IDD5;
-extern unsigned IDD7;
 extern float Vdd; 
 
 using namespace DRAMSim;

@@ -294,9 +294,12 @@ void MultiChannelMemorySystem::InitOutputFiles(string traceFilename)
 	}
 
 #ifdef LOG_OUTPUT
-  assert(pwd.length() > 0);
-  string path = pwd + "/"; 
-  mkdirIfNotExist(path); // create the directories if they don't exist 
+  string path;
+  if (!(pwd.length() > 0)) {
+    path = pwd + "/"; 
+    mkdirIfNotExist(path); // create the directories if they don't exist 
+	}
+
   string dramsimLogFilename = path + logFilename;
 
 	if (sim_description != NULL)
