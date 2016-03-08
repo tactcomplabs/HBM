@@ -1,15 +1,14 @@
-CXXFLAGS=-DNO_STORAGE -Wall -DDEBUG_BUILD 
+CXXFLAGS=-DNO_STORAGE -Wall -DNO_OUTPUT
 OPTFLAGS=-O3 
 
 
 ifdef DEBUG
 ifeq ($(DEBUG), 1)
-OPTFLAGS= -O0 -g
+OPTFLAGS= -O0 -g -DNO_OUTPUT
 endif
 endif
 CXXFLAGS+=$(OPTFLAGS)
 
-EXE_NAME=DRAMSim
 STATIC_LIB_NAME := libdramsim.a
 LIB_NAME=libdramsim.so
 LIB_NAME_MACOS=libdramsim.dylib
@@ -23,15 +22,11 @@ LIB_OBJ := $(addsuffix .o, $(basename $(LIB_SRC)))
 #build portable objects (i.e. with -fPIC)
 POBJ = $(addsuffix .po, $(basename $(LIB_SRC)))
 
-REBUILDABLES=$(OBJ) ${POBJ} $(EXE_NAME) $(LIB_NAME) $(STATIC_LIB_NAME)
+REBUILDABLES=$(OBJ) ${POBJ} $(LIB_NAME) $(STATIC_LIB_NAME)
 
-all: ${EXE_NAME}
+all: ${LIB_NAME}
 
 #   $@ target name, $^ target deps, $< matched pattern
-$(EXE_NAME): $(OBJ)
-	$(CXX) $(CXXFLAGS) -o $@ $^ 
-	@echo "Built $@ successfully" 
-
 $(LIB_NAME): $(POBJ)
 	g++ -g -shared -Wl,-soname,$@ -o $@ $^
 	@echo "Built $@ successfully"
