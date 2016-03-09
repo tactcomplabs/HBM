@@ -14,10 +14,9 @@ object encapsulates the functionality of the memory system.
 For details usage, please refer to SST's memHierarchy component source code.
 Specifically, <SST_ROOT>/sst/elements/memHierarchy/membackend/dramSimBackend.[h.cc]
 
-Note, one more argument (for log filename) is added for HBM simulation; 
+Brielf explanations on arguments for HBM simulation; 
 arg 1: device.ini (absoluth path will override arg 3)
 arg 2: system.ini (absoluth path will override arg 3)
 arg 3: search path for the files 
 arg 4: trace file (which is obsolete for HBM simulation)
-arg 5: log filename <-- this doesn't exist in DRAMSim2
-arg 6: channel size
+arg 5: channel size
