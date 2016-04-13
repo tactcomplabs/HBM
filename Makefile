@@ -55,7 +55,7 @@ $(LIB_NAME_MACOS): $(POBJ)
 
 #po = portable object .. for lack of a better term
 %.po : %.cpp
-	g++ $(CXXFLAGS) -DLOG_OUTPUT -fPIC -o $@ -c $<
+	g++ $(CXXFLAGS) -fPIC -o $@ -c $<
 
 clean: 
 	-rm -f $(REBUILDABLES) *.dep *.deppo
