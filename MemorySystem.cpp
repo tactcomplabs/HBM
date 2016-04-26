@@ -53,16 +53,17 @@ namespace DRAMSim {
 
 powerCallBack_t MemorySystem::ReportPower = NULL;
 
-MemorySystem::MemorySystem(unsigned id, unsigned int megsOfMemory, CSVWriter &csvOut_, ostream &dramsim_log_) :
+MemorySystem::MemorySystem(unsigned sid, unsigned cid, unsigned int megsOfMemory, CSVWriter &csvOut_, ostream &dramsim_log_) :
 		dramsim_log(dramsim_log_),
 		ReturnReadData(NULL),
 		WriteDataDone(NULL),
-		systemID(id),
+    stackID(sid),
+		channelID(cid),
 		csvOut(csvOut_)
 {
 	currentClockCycle = 0;
 
-	DEBUG("===== MemorySystem "<<systemID<<" =====");
+	DEBUG("===== MemorySystem " << stackID << " ==== " << channelID << " =====");
 
 
 	//calculate the total storage based on the devices the user selected and the number of
@@ -129,9 +130,9 @@ MemorySystem::MemorySystem(unsigned id, unsigned int megsOfMemory, CSVWriter &cs
 	NUM_DEVICES = JEDEC_DATA_BUS_BITS/DEVICE_WIDTH; 
 	TOTAL_STORAGE = (NUM_RANKS * megsOfStoragePerRank); 
 
-	DEBUG("CH. " <<systemID<<" TOTAL_STORAGE : "<< TOTAL_STORAGE << "MB | "<<NUM_RANKS<<" Ranks | "<< NUM_DEVICES <<" Devices per rank");
+	DEBUG("CH. " <<channelID<<" TOTAL_STORAGE : "<< TOTAL_STORAGE << "MB | "<<NUM_RANKS<<" Ranks | "<< NUM_DEVICES <<" Devices per rank");
 
-	memoryController = new MemoryController(this, csvOut, dramsim_log);
+	memoryController = new MemoryController(stackID, channelID, this, csvOut, dramsim_log);
 
 	// TODO: change to other vector constructor?
 	ranks = new vector<Rank *>();
@@ -153,7 +154,7 @@ MemorySystem::MemorySystem(unsigned id, unsigned int megsOfMemory, CSVWriter &cs
 MemorySystem::~MemorySystem()
 {
 	/* the MemorySystem should exist for all time, nothing should be destroying it */  
-//	ERROR("MEMORY SYSTEM DESTRUCTOR with ID "<<systemID);
+//	ERROR("MEMORY SYSTEM DESTRUCTOR with ID "<<channelID);
 //	abort();
 
 	delete(memoryController);

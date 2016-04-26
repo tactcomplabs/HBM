@@ -27,6 +27,7 @@
 *  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *********************************************************************************/
+#include <atomic>
 #include "SimulatorObject.h"
 #include "Transaction.h"
 #include "SystemConfiguration.h"
@@ -73,6 +74,8 @@ class MultiChannelMemorySystem : public SimulatorObject
 		unsigned findChannelNumber(uint64_t addr);
 		void actual_update(); 
 		vector<MemorySystem*> channels; 
+    static std::atomic<int> stackCount;
+    unsigned stackID;
 		unsigned megsOfMemory; 
 		string deviceIniFilename;
 		string systemIniFilename;

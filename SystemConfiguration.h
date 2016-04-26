@@ -86,8 +86,6 @@ extern unsigned DEVICE_WIDTH;
 extern unsigned PREFETCH_SIZE;
 extern unsigned BYTE_OFFSET_WIDTH;
 extern unsigned TRANSACTION_SIZE;
-extern unsigned THROW_AWAY_BITS;
-extern unsigned COL_LOW_BIT_WIDTH;
 
 //in nanoseconds
 extern unsigned REFRESH_PERIOD;
@@ -152,13 +150,8 @@ enum TraceType
 
 enum AddressMappingScheme
 {
-	Scheme1,
-	Scheme2,
-	Scheme3,
-	Scheme4,
-	Scheme5,
-	Scheme6,
-	Scheme7
+  ChRaBaRoCo,
+  RoBaRaCoCh
 };
 
 // used in MemoryController and CommandQueue

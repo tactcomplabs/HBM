@@ -51,13 +51,40 @@ using namespace std;
 
 namespace DRAMSim
 {
+#ifdef DEBUG_LATENCY
+class LatencyBreakdown
+{
+  public:
+    LatencyBreakdown() {}  // default constructor
+    LatencyBreakdown(uint64_t tattq) : 
+      timeAddedToTransactionQueue(tattq),
+      timeAddedToCommandQueue(0),
+      timeScheduled(0),
+      timeRowCommandExecuted(0),
+      timeColumnCommandExecuted(0),
+      timeWriteDone(0),
+      timeReadDone(0),
+      timeReturned(0) {} // constructor
+
+  public:
+    uint64_t timeAddedToTransactionQueue;
+    uint64_t timeAddedToCommandQueue;
+    uint64_t timeScheduled; 
+    uint64_t timeRowCommandExecuted; //TODO
+    uint64_t timeColumnCommandExecuted; //TODO
+    uint64_t timeWriteDone;
+    uint64_t timeReadDone;
+    uint64_t timeReturned;
+};
+#endif
+
 class MemorySystem;
 class MemoryController : public SimulatorObject
 {
 
 public:
 	//functions
-	MemoryController(MemorySystem* ms, CSVWriter &csvOut_, ostream &dramsim_log_);
+	MemoryController(unsigned sid, unsigned cid, MemorySystem* ms, CSVWriter &csvOut_, ostream &dramsim_log_);
 	virtual ~MemoryController();
 
 	bool addTransaction(Transaction *trans);
@@ -73,6 +100,9 @@ public:
 	//fields
 	vector<Transaction *> transactionQueue;
 private:
+  unsigned stackID;
+  unsigned channelID;
+
 	ostream &dramsim_log;
 	vector< vector <BankState> > bankStates;
 	//functions
@@ -91,7 +121,7 @@ private:
 	map<unsigned,unsigned> latencies; // latencyValue -> latencyCount
 	vector<bool> powerDown;
 
-	vector<Rank *> *ranks;
+  vector<Rank *> *ranks;
 
 	//output file
 	CSVWriter &csvOut; 
@@ -130,6 +160,9 @@ public:
 	vector< uint64_t > actpreEnergy;
 	vector< uint64_t > refreshEnergy;
 
+#ifdef DEBUG_LATENCY
+  map<uint64_t,LatencyBreakdown> latencyBreakdowns;
+#endif
 };
 }
 

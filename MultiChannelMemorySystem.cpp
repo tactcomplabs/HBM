@@ -43,6 +43,8 @@
 using namespace DRAMSim; 
 
 
+std::atomic<int> MultiChannelMemorySystem::stackCount(0);
+
 MultiChannelMemorySystem::MultiChannelMemorySystem(const string &deviceIniFilename_, const string &systemIniFilename_, const string &pwd_, const string &traceFilename_, unsigned megsOfMemory_, string *visFilename_, const IniReader::OverrideMap *paramOverrides)
 	:megsOfMemory(megsOfMemory_), deviceIniFilename(deviceIniFilename_),
 	systemIniFilename(systemIniFilename_), traceFilename(traceFilename_),
@@ -50,6 +52,8 @@ MultiChannelMemorySystem::MultiChannelMemorySystem(const string &deviceIniFilena
 	clockDomainCrosser(new ClockDomain::Callback<MultiChannelMemorySystem, void>(this, &MultiChannelMemorySystem::actual_update)),
 	csvOut(new CSVWriter(visDataOut))
 {
+  stackID = stackCount++;
+
 	currentClockCycle=0; 
 	if (visFilename)
 		printf("CC VISFILENAME=%s\n",visFilename->c_str());
@@ -94,9 +98,9 @@ MultiChannelMemorySystem::MultiChannelMemorySystem(const string &deviceIniFilena
 		ERROR("Zero channels"); 
 		abort(); 
 	}
-	for (size_t i=0; i<NUM_CHANS; i++)
+	for (size_t cid=0; cid<NUM_CHANS; cid++)
 	{
-		MemorySystem *channel = new MemorySystem(i, megsOfMemory/NUM_CHANS, (*csvOut), dramsim_log);
+		MemorySystem *channel = new MemorySystem(stackID, cid, megsOfMemory/NUM_CHANS, (*csvOut), dramsim_log);
 		channels.push_back(channel);
 	}
 }

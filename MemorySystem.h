@@ -55,7 +55,7 @@ class MemorySystem : public SimulatorObject
 	ostream &dramsim_log;
 public:
 	//functions
-	MemorySystem(unsigned id, unsigned megsOfMemory, CSVWriter &csvOut_, ostream &dramsim_log_);
+	MemorySystem(unsigned sid, unsigned cid, unsigned megsOfMemory, CSVWriter &csvOut_, ostream &dramsim_log_);
 	virtual ~MemorySystem();
 	void update();
 	bool addTransaction(Transaction *trans);
@@ -78,7 +78,8 @@ public:
 	Callback_t* WriteDataDone;
 	//TODO: make this a functor as well?
 	static powerCallBack_t ReportPower;
-	unsigned systemID;
+	unsigned stackID;
+	unsigned channelID;
 
 private:
 	CSVWriter &csvOut;

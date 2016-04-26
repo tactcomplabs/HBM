@@ -55,7 +55,9 @@ extern float Vdd;
 
 using namespace DRAMSim;
 
-MemoryController::MemoryController(MemorySystem *parent, CSVWriter &csvOut_, ostream &dramsim_log_) :
+MemoryController::MemoryController(unsigned sid, unsigned cid, MemorySystem *parent, CSVWriter &csvOut_, ostream &dramsim_log_) :
+    stackID(sid),
+    channelID(cid),
 		dramsim_log(dramsim_log_),
 		bankStates(NUM_RANKS, vector<BankState>(NUM_BANKS, dramsim_log)),
 		commandQueue(bankStates, dramsim_log_),
@@ -125,6 +127,10 @@ void MemoryController::receiveFromBus(BusPacket *bpacket)
 	returnTransaction.push_back(new Transaction(RETURN_DATA, bpacket->physicalAddress, bpacket->data));
 	totalReadsPerBank[SEQUENTIAL(bpacket->rank,bpacket->bank)]++;
 
+#ifdef DEBUG_LATENCY
+    latencyBreakdowns[bpacket->physicalAddress].timeReadDone = currentClockCycle;
+#endif
+
 	// this delete statement saves a mindboggling amount of memory
 	delete(bpacket);
 }
@@ -134,7 +140,7 @@ void MemoryController::returnReadData(const Transaction *trans)
 {
 	if (parentMemorySystem->ReturnReadData!=NULL)
 	{
-		(*parentMemorySystem->ReturnReadData)(parentMemorySystem->systemID, trans->address, currentClockCycle);
+		(*parentMemorySystem->ReturnReadData)(parentMemorySystem->channelID, trans->address, currentClockCycle);
 	}
 }
 
@@ -206,8 +212,21 @@ void MemoryController::update()
 			//inform upper levels that a write is done
 			if (parentMemorySystem->WriteDataDone!=NULL)
 			{
-				(*parentMemorySystem->WriteDataDone)(parentMemorySystem->systemID,outgoingDataPacket->physicalAddress, currentClockCycle);
+				(*parentMemorySystem->WriteDataDone)(parentMemorySystem->channelID,outgoingDataPacket->physicalAddress, currentClockCycle);
 			}
+
+#ifdef DEBUG_LATENCY
+    latencyBreakdowns[outgoingDataPacket->physicalAddress].timeWriteDone = currentClockCycle;
+    latencyBreakdowns[outgoingDataPacket->physicalAddress].timeReturned = currentClockCycle;
+
+    LatencyBreakdown &lbd = latencyBreakdowns[outgoingDataPacket->physicalAddress];
+    DEBUG("[" << stackID << "][" << channelID << "] addr:" << hex << "0x" << outgoingDataPacket->physicalAddress << dec << 
+        " timeAddedToTransactionQueue: " << lbd.timeAddedToTransactionQueue <<
+        " timeAddedToCommandQueue: " << lbd.timeAddedToCommandQueue <<
+        " timeScheduled: " << lbd.timeScheduled <<
+        " timeWriteDone: " << lbd.timeWriteDone <<
+        " timeReturned: " << lbd.timeReturned);
+#endif
 
 			(*ranks)[outgoingDataPacket->rank]->receiveFromBus(outgoingDataPacket);
 			outgoingDataPacket=NULL;
@@ -482,6 +501,9 @@ void MemoryController::update()
 		outgoingCmdPacket = poppedBusPacket;
 		cmdCyclesLeft = tCMD;
 
+#ifdef DEBUG_LATENCY
+    latencyBreakdowns[poppedBusPacket->physicalAddress].timeScheduled = currentClockCycle;
+#endif
 	}
 
 	for (size_t i=0;i<transactionQueue.size();i++)
@@ -535,7 +557,9 @@ void MemoryController::update()
 					newTransactionColumn, newTransactionRow, newTransactionRank,
 					newTransactionBank, transaction->data, dramsim_log);
 
-
+#ifdef DEBUG_LATENCY
+      latencyBreakdowns[transaction->address].timeAddedToCommandQueue = currentClockCycle;
+#endif
 
 			commandQueue.enqueue(ACTcommand);
 			commandQueue.enqueue(command);
@@ -673,6 +697,20 @@ void MemoryController::update()
 				//		pendingReadTransactions[i]->print();
 				//		exit(0);
 				//	}
+
+#ifdef DEBUG_LATENCY
+        latencyBreakdowns[pendingReadTransactions[i]->address].timeReturned = currentClockCycle;
+        LatencyBreakdown &lbd = latencyBreakdowns[pendingReadTransactions[i]->address];
+        DEBUG("[" << stackID << "][" << channelID << "] addr:" << hex << "0x" << pendingReadTransactions[i]->address << dec << 
+            " timeAddedToTransactionQueue: " << lbd.timeAddedToTransactionQueue <<
+            " timeAddedToCommandQueue: " << lbd.timeAddedToCommandQueue <<
+            " timeScheduled: " << lbd.timeScheduled <<
+            " timeReadDone: " << lbd.timeReadDone <<
+            " timeReturned: " << lbd.timeReturned);
+#endif
+
+        //DEBUG(hex << "0x" << pendingReadTransactions[i]->address << "," << dec << pendingReadTransactions[i]->timeAdded << "," << currentClockCycle << "," << currentClockCycle - pendingReadTransactions[i]->timeAdded);
+
 				unsigned chan,rank,bank,row,col;
 				addressMapping(returnTransaction[0]->address,chan,rank,bank,row,col);
 				insertHistogram(currentClockCycle-pendingReadTransactions[i]->timeAdded,rank,bank);
@@ -766,6 +804,11 @@ bool MemoryController::addTransaction(Transaction *trans)
 	{
 		trans->timeAdded = currentClockCycle;
 		transactionQueue.push_back(trans);
+
+#ifdef DEBUG_LATENCY
+    LatencyBreakdown lbd(currentClockCycle);
+    latencyBreakdowns.insert(pair<uint64_t, LatencyBreakdown>(trans->address, lbd));
+#endif
 		return true;
 	}
 	else 
@@ -798,7 +841,7 @@ void MemoryController::resetStats()
 //prints statistics at the end of an epoch or  simulation
 void MemoryController::printStats(bool finalStats)
 {
-	unsigned myChannel = parentMemorySystem->systemID;
+	unsigned myChannel = parentMemorySystem->channelID;
 
 	//if we are not at the end of the epoch, make sure to adjust for the actual number of cycles elapsed
 
@@ -839,7 +882,7 @@ void MemoryController::printStats(bool finalStats)
 #endif
 
 	PRINT( " =======================================================" );
-	PRINT( " ============== Printing Statistics [id:"<<parentMemorySystem->systemID<<"]==============" );
+	PRINT( " ============== Printing Statistics [id:"<<parentMemorySystem->channelID<<"]==============" );
 	PRINTN( "   Total Return Transactions : " << totalTransactions );
 	PRINT( " ("<<totalBytesTransferred <<" bytes) aggregate average bandwidth "<<totalBandwidth<<"GB/s");
 

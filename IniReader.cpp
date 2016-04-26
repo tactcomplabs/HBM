@@ -55,8 +55,6 @@ unsigned DEVICE_WIDTH;
 unsigned PREFETCH_SIZE;
 unsigned BYTE_OFFSET_WIDTH;
 unsigned TRANSACTION_SIZE;
-unsigned THROW_AWAY_BITS;
-unsigned COL_LOW_BIT_WIDTH;
 
 unsigned REFRESH_PERIOD;
 float tCK;
@@ -203,14 +201,10 @@ static ConfigMap configMap[] =
 
 void IniReader::WriteParams(std::ofstream &visDataOut, paramType type)
 {
-	for (size_t i=0; configMap[i].variablePtr != NULL; i++)
-	{
-		if (configMap[i].parameterType == type)
-		{
+	for (size_t i=0; configMap[i].variablePtr != NULL; i++) {
+		if (configMap[i].parameterType == type) {
 			visDataOut<<configMap[i].iniKey<<"=";
-			switch (configMap[i].variableType)
-			{
-				//parse and set each type of variable
+			switch (configMap[i].variableType) { //parse and set each type of variable
 			case UINT:
 				visDataOut << *((unsigned *)configMap[i].variablePtr);
 				break;
@@ -225,23 +219,19 @@ void IniReader::WriteParams(std::ofstream &visDataOut, paramType type)
 				break;
 			case BOOL:
 				if (*((bool *)configMap[i].variablePtr))
-				{
 					visDataOut <<"true";
-				}
 				else
-				{
 					visDataOut <<"false";
-				}
 				break;
 			}
 			visDataOut << endl;
 		}
 	}
-	if (type == SYS_PARAM)
-	{
-		visDataOut<<"NUM_RANKS="<<NUM_RANKS <<"\n";
-	}
+
+	if (type == SYS_PARAM) 
+    visDataOut<<"NUM_RANKS="<<NUM_RANKS <<"\n";
 }
+
 void IniReader::WriteValuesOut(std::ofstream &visDataOut)
 {
 	visDataOut<<"!!SYSTEM_INI"<<endl;
@@ -251,7 +241,6 @@ void IniReader::WriteValuesOut(std::ofstream &visDataOut)
 
 	WriteParams(visDataOut, DEV_PARAM); 
 	visDataOut<<"!!EPOCH_DATA"<<endl;
-
 }
 
 void IniReader::SetKey(string key, string valueString, bool isSystemParam, size_t lineNumber)
@@ -348,84 +337,85 @@ void IniReader::SetKey(string key, string valueString, bool isSystemParam, size_
 
 void IniReader::ReadIniFile(string filename, bool isSystemFile)
 {
-	ifstream iniFile;
-	string line;
-	string key,valueString;
+  ifstream iniFile;
+  string line;
+  string key,valueString;
 
-	size_t commentIndex, equalsIndex;
-	size_t lineNumber=0;
+  size_t commentIndex, equalsIndex;
+  size_t lineNumber=0;
 
-	iniFile.open(filename.c_str());
-	if (iniFile.is_open())
-	{
-		while (!iniFile.eof())
-		{
-			lineNumber++;
-			getline(iniFile, line);
-			//this can happen if the filename is actually a directory
-			if (iniFile.bad())
-			{
-				ERROR("Cannot read ini file '"<<filename<<"'");
-				exit(-1);
-			}
-			// skip zero-length lines
-			if (line.size() == 0)
-			{
-//					DEBUG("Skipping blank line "<<lineNumber);
-				continue;
-			}
-			//search for a comment char
-			if ((commentIndex = line.find_first_of(";")) != string::npos)
-			{
-				//if the comment char is the first char, ignore the whole line
-				if (commentIndex == 0)
-				{
-//						DEBUG("Skipping comment line "<<lineNumber);
-					continue;
-				}
-//					DEBUG("Truncating line at comment"<<line[commentIndex-1]);
-				//truncate the line at first comment before going on
-				line = line.substr(0,commentIndex);
-			}
-			// trim off the end spaces that might have been between the value and comment char
-			size_t whiteSpaceEndIndex;
-			if ((whiteSpaceEndIndex = line.find_last_not_of(" \t")) != string::npos)
-			{
-				line = line.substr(0,whiteSpaceEndIndex+1);
-			}
+  iniFile.open(filename.c_str());
+  if (iniFile.is_open()) {
+    while (!iniFile.eof()) {
+      lineNumber++;
+      getline(iniFile, line);
 
-			// at this point line should be a valid, commentless string
+      //this can happen if the filename is actually a directory
+      if (iniFile.bad()) {
+        ERROR("Cannot read ini file '"<<filename<<"'");
+        exit(-1);
+      }
 
-			// a line has to have an equals sign
-			if ((equalsIndex = line.find_first_of("=")) == string::npos)
-			{
-				ERROR("Malformed Line "<<lineNumber<<" (missing equals)");
-				abort();
-			}
-			size_t strlen = line.size();
-			// all characters before the equals are the key
-			key = line.substr(0, equalsIndex);
-			// all characters after the equals are the value
-			valueString = line.substr(equalsIndex+1,strlen-equalsIndex);
+      // skip zero-length lines
+      if (line.size() == 0) {
+        // DEBUG("Skipping blank line "<<lineNumber);
+        continue;
+      }
 
-			IniReader::SetKey(key, valueString, isSystemFile, lineNumber);
-			// got to the end of the config map without finding the key
-		}
-	}
-	else
-	{
-		ERROR ("Unable to load ini file "<<filename);
-		abort();
-	}
-	/* precompute frequently used values */
-	NUM_BANKS_LOG		= dramsim_log2(NUM_BANKS);
-	NUM_CHANS_LOG		= dramsim_log2(NUM_CHANS);
-	NUM_ROWS_LOG		= dramsim_log2(NUM_ROWS);
-	NUM_COLS_LOG		= dramsim_log2(NUM_COLS);
-	BYTE_OFFSET_WIDTH	= dramsim_log2(JEDEC_DATA_BUS_BITS / 8);
-	TRANSACTION_SIZE	= JEDEC_DATA_BUS_BITS / 8 * BL;
-	THROW_AWAY_BITS		= dramsim_log2(TRANSACTION_SIZE);
-	COL_LOW_BIT_WIDTH	= THROW_AWAY_BITS - BYTE_OFFSET_WIDTH;
+      //search for a comment char
+      if ((commentIndex = line.find_first_of(";")) != string::npos) {
+        //if the comment char is the first char, ignore the whole line
+        if (commentIndex == 0) {
+          //DEBUG("Skipping comment line "<<lineNumber);
+          continue;
+        }
+
+        //DEBUG("Truncating line at comment"<<line[commentIndex-1]);
+        //truncate the line at first comment before going on
+        line = line.substr(0,commentIndex);
+      }
+
+      // trim off the end spaces that might have been between the value and comment char
+      size_t whiteSpaceEndIndex;
+      if ((whiteSpaceEndIndex = line.find_last_not_of(" \t")) != string::npos) {
+        line = line.substr(0,whiteSpaceEndIndex+1);
+      }
+
+      // at this point line should be a valid, commentless string
+
+      // a line has to have an equals sign
+      if ((equalsIndex = line.find_first_of("=")) == string::npos) {
+        ERROR("Malformed Line "<<lineNumber<<" (missing equals)");
+        abort();
+      }
+
+      size_t strlen = line.size();
+
+      // all characters before the equals are the key
+      key = line.substr(0, equalsIndex);
+
+      // all characters after the equals are the value
+      valueString = line.substr(equalsIndex+1,strlen-equalsIndex);
+
+      IniReader::SetKey(key, valueString, isSystemFile, lineNumber);
+      // got to the end of the config map without finding the key
+    }
+  } else {
+    ERROR ("Unable to load ini file "<<filename);
+    abort();
+  }
+
+  /* precompute frequently used values */
+  NUM_BANKS_LOG = dramsim_log2(NUM_BANKS);
+  NUM_CHANS_LOG = dramsim_log2(NUM_CHANS);
+  NUM_ROWS_LOG  = dramsim_log2(NUM_ROWS);
+  NUM_COLS_LOG  = dramsim_log2(NUM_COLS);
+
+  // after system.ini is read
+  if (JEDEC_DATA_BUS_BITS > 0) {
+    BYTE_OFFSET_WIDTH	= dramsim_log2(PREFETCH_SIZE / JEDEC_DATA_BUS_BITS);
+    TRANSACTION_SIZE	= JEDEC_DATA_BUS_BITS / 8 * BL;
+  }
 }
 
 void IniReader::OverrideKeys(const OverrideMap *map)
@@ -504,134 +494,49 @@ DEF_GETTER(IniReader::getFloat, float, FLOAT)
 
 void IniReader::InitEnumsFromStrings()
 {
-	if (ADDRESS_MAPPING_SCHEME == "scheme1")
-	{
-		addressMappingScheme = Scheme1;
-		if (DEBUG_INI_READER) 
-		{
-			DEBUG("ADDR SCHEME: 1");
-		}
-	}
-	else if (ADDRESS_MAPPING_SCHEME == "scheme2")
-	{
-		addressMappingScheme = Scheme2;
-		if (DEBUG_INI_READER) 
-		{
-			DEBUG("ADDR SCHEME: 2");
-		}
-	}
-	else if (ADDRESS_MAPPING_SCHEME == "scheme3")
-	{
-		addressMappingScheme = Scheme3;
-		if (DEBUG_INI_READER) 
-		{
-			DEBUG("ADDR SCHEME: 3");
-		}
-	}
-	else if (ADDRESS_MAPPING_SCHEME == "scheme4")
-	{
-		addressMappingScheme = Scheme4;
-		if (DEBUG_INI_READER) 
-		{
-			DEBUG("ADDR SCHEME: 4");
-		}
-	}
-	else if (ADDRESS_MAPPING_SCHEME == "scheme5")
-	{
-		addressMappingScheme = Scheme5;
-		if (DEBUG_INI_READER) 
-		{
-			DEBUG("ADDR SCHEME: 5");
-		}
-	}
-	else if (ADDRESS_MAPPING_SCHEME == "scheme6")
-	{
-		addressMappingScheme = Scheme6;
-		if (DEBUG_INI_READER) 
-		{
-			DEBUG("ADDR SCHEME: 6");
-		}
-	}
-	else if (ADDRESS_MAPPING_SCHEME == "scheme7")
-	{
-		addressMappingScheme = Scheme7;
-		if (DEBUG_INI_READER) 
-		{
-			DEBUG("ADDR SCHEME: 7");
-		}
-	}
-	else
-	{
-		cout << "WARNING: unknown address mapping scheme '"<<ADDRESS_MAPPING_SCHEME<<"'; valid values are 'scheme1'...'scheme7'. Defaulting to scheme1"<<endl;
-		addressMappingScheme = Scheme1;
-	}
+  if (ADDRESS_MAPPING_SCHEME == "ChRaBaRoCo") {
+    addressMappingScheme = ChRaBaRoCo;
+    if (DEBUG_INI_READER) { DEBUG("ADDR SCHEME: ChRaBaRoCo"); }
+  } else if (ADDRESS_MAPPING_SCHEME == "RoBaRaCoCh") {
+    addressMappingScheme = RoBaRaCoCh;
+    if (DEBUG_INI_READER) { DEBUG("ADDR SCHEME: RoBaRaCoCh"); }
+  } else {
+    cout << "WARNING: unknown address mapping scheme '"<<ADDRESS_MAPPING_SCHEME<<"'; valid values are 'ChRaBaRoCo' or 'RoBaRaCoCh'. Defaulting to RoBaRaCoCh"<<endl;
+    addressMappingScheme = RoBaRaCoCh;
+  }
 
-	if (ROW_BUFFER_POLICY == "open_page")
-	{
-		rowBufferPolicy = OpenPage;
-		if (DEBUG_INI_READER) 
-		{
-			DEBUG("ROW BUFFER: open page");
-		}
-	}
-	else if (ROW_BUFFER_POLICY == "close_page")
-	{
-		rowBufferPolicy = ClosePage;
-		if (DEBUG_INI_READER) 
-		{
-			DEBUG("ROW BUFFER: close page");
-		}
-	}
-	else
-	{
-		cout << "WARNING: unknown row buffer policy '"<<ROW_BUFFER_POLICY<<"'; valid values are 'open_page' or 'close_page', Defaulting to Close Page."<<endl;
-		rowBufferPolicy = ClosePage;
-	}
+  if (ROW_BUFFER_POLICY == "open_page") {
+    rowBufferPolicy = OpenPage;
+    if (DEBUG_INI_READER) { DEBUG("ROW BUFFER: open page"); }
+  } else if (ROW_BUFFER_POLICY == "close_page") {
+    rowBufferPolicy = ClosePage;
+    if (DEBUG_INI_READER) { DEBUG("ROW BUFFER: close page"); }
+  } else {
+    cout << "WARNING: unknown row buffer policy '"<<ROW_BUFFER_POLICY<<"'; valid values are 'open_page' or 'close_page', Defaulting to Close Page."<<endl;
+    rowBufferPolicy = ClosePage;
+  }
 
-	if (QUEUING_STRUCTURE == "per_rank_per_bank")
-	{
-		queuingStructure = PerRankPerBank;
-		if (DEBUG_INI_READER) 
-		{
-			DEBUG("QUEUING STRUCT: per rank per bank");
-		}
-	}
-	else if (QUEUING_STRUCTURE == "per_rank")
-	{
-		queuingStructure = PerRank;
-		if (DEBUG_INI_READER) 
-		{
-			DEBUG("QUEUING STRUCT: per rank");
-		}
-	}
-	else
-	{
-		cout << "WARNING: Unknown queueing structure '"<<QUEUING_STRUCTURE<<"'; valid options are 'per_rank' and 'per_rank_per_bank', defaulting to Per Rank Per Bank"<<endl;
-		queuingStructure = PerRankPerBank;
-	}
+  if (QUEUING_STRUCTURE == "per_rank_per_bank") {
+    queuingStructure = PerRankPerBank;
+    if (DEBUG_INI_READER) { DEBUG("QUEUING STRUCT: per rank per bank"); }
+  } else if (QUEUING_STRUCTURE == "per_rank") {
+    queuingStructure = PerRank;
+    if (DEBUG_INI_READER) { DEBUG("QUEUING STRUCT: per rank"); }
+  } else {
+    cout << "WARNING: Unknown queueing structure '"<<QUEUING_STRUCTURE<<"'; valid options are 'per_rank' and 'per_rank_per_bank', defaulting to Per Rank Per Bank"<<endl;
+    queuingStructure = PerRankPerBank;
+  }
 
-	if (SCHEDULING_POLICY == "rank_then_bank_round_robin")
-	{
-		schedulingPolicy = RankThenBankRoundRobin;
-		if (DEBUG_INI_READER) 
-		{
-			DEBUG("SCHEDULING: Rank Then Bank");
-		}
-	}
-	else if (SCHEDULING_POLICY == "bank_then_rank_round_robin")
-	{
-		schedulingPolicy = BankThenRankRoundRobin;
-		if (DEBUG_INI_READER) 
-		{
-			DEBUG("SCHEDULING: Bank Then Rank");
-		}
-	}
-	else
-	{
-		cout << "WARNING: Unknown scheduling policy '"<<SCHEDULING_POLICY<<"'; valid options are 'rank_then_bank_round_robin' or 'bank_then_rank_round_robin'; defaulting to Bank Then Rank Round Robin" << endl;
-		schedulingPolicy = BankThenRankRoundRobin;
-	}
-
+  if (SCHEDULING_POLICY == "rank_then_bank_round_robin") {
+    schedulingPolicy = RankThenBankRoundRobin;
+    if (DEBUG_INI_READER) { DEBUG("SCHEDULING: Rank Then Bank"); }
+  } else if (SCHEDULING_POLICY == "bank_then_rank_round_robin") {
+    schedulingPolicy = BankThenRankRoundRobin;
+    if (DEBUG_INI_READER) { DEBUG("SCHEDULING: Bank Then Rank"); }
+  } else {
+    cout << "WARNING: Unknown scheduling policy '"<<SCHEDULING_POLICY<<"'; valid options are 'rank_then_bank_round_robin' or 'bank_then_rank_round_robin'; defaulting to Bank Then Rank Round Robin" << endl;
+    schedulingPolicy = BankThenRankRoundRobin;
+  }
 }
 
 } // namespace DRAMSim
