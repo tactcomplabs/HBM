@@ -37,6 +37,9 @@
 //Header file for memory controller object
 //
 
+#include <map>
+#include <deque>
+
 #include "SimulatorObject.h"
 #include "Transaction.h"
 #include "SystemConfiguration.h"
@@ -45,7 +48,6 @@
 #include "BankState.h"
 #include "Rank.h"
 #include "CSVWriter.h"
-#include <map>
 
 using namespace std;
 
@@ -56,7 +58,8 @@ class LatencyBreakdown
 {
   public:
     LatencyBreakdown() {}  // default constructor
-    LatencyBreakdown(uint64_t tattq) : 
+    LatencyBreakdown(uint64_t tattq, bool read = true) : 
+      isRead(read),
       timeAddedToTransactionQueue(tattq),
       timeAddedToCommandQueue(0),
       timeScheduled(0),
@@ -67,6 +70,7 @@ class LatencyBreakdown
       timeReturned(0) {} // constructor
 
   public:
+    bool isRead;
     uint64_t timeAddedToTransactionQueue;
     uint64_t timeAddedToCommandQueue;
     uint64_t timeScheduled; 
@@ -161,7 +165,7 @@ public:
 	vector< uint64_t > refreshEnergy;
 
 #ifdef DEBUG_LATENCY
-  map<uint64_t,LatencyBreakdown> latencyBreakdowns;
+  map<uint64_t, deque<LatencyBreakdown>> latencyBreakdowns;
 #endif
 };
 }

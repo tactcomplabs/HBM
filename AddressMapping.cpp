@@ -53,7 +53,7 @@ void addressMapping(uint64_t physicalAddress, unsigned &newTransactionChan, unsi
   }
 
   // taking into account 256-bit prefetch architecture
-  physicalAddress >>= byteOffsetWidth;
+  colBitWidth -= byteOffsetWidth;
 
   // taking into account transaction size
   physicalAddress >>= dramsim_log2(transactionSize);
@@ -125,9 +125,7 @@ void addressMapping(uint64_t physicalAddress, unsigned &newTransactionChan, unsi
   }
 
   if (DEBUG_ADDR_MAP) {
-    DEBUG("Mapped Ch="<<newTransactionChan<<" Rank="<<newTransactionRank
-        <<" Bank="<<newTransactionBank<<" Row="<<newTransactionRow
-        <<" Col="<<newTransactionColumn<<"\n"); 
+    DEBUG("Mapped Ch="<<newTransactionChan<<" Rank="<<newTransactionRank << " Bank="<<newTransactionBank<<" Row="<<newTransactionRow <<" Col="<<newTransactionColumn); 
   }
 }
 
