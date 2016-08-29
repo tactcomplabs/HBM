@@ -53,35 +53,22 @@ typedef enum _variableType {STRING, UINT, UINT64, FLOAT, BOOL} varType;
 typedef enum _paramType {SYS_PARAM, DEV_PARAM} paramType;
 typedef struct _configMap
 {
-	string iniKey; //for example "tRCD"
+  string iniKey; //for example "tRCD"
 
-	void *variablePtr;
-	varType variableType;
-	paramType parameterType;
-	bool wasSet;
+  void *variablePtr;
+  varType variableType;
+  paramType parameterType;
+  bool wasSet;
 } ConfigMap;
 
 class IniReader
 {
 
 public:
-	typedef std::map<string, string> OverrideMap;
-	typedef OverrideMap::const_iterator OverrideIterator; 
-
-	static void SetKey(string key, string value, bool isSystemParam = false, size_t lineNumber = 0);
-	static void OverrideKeys(const OverrideMap *map);
-	static void ReadIniFile(string filename, bool isSystemParam);
-	static void InitEnumsFromStrings();
-	static bool CheckIfAllSet();
-	static void WriteValuesOut(std::ofstream &visDataOut);
-	static int getBool(const std::string &field, bool *val);
-	static int getUint(const std::string &field, unsigned int *val);
-	static int getUint64(const std::string &field, uint64_t *val);
-	static int getFloat(const std::string &field, float *val);
-
-private:
-	static void WriteParams(std::ofstream &visDataOut, paramType t);
-	static void Trim(string &str);
+  static void SetKey(string key, string value, bool isSystemParam = false, size_t lineNumber = 0);
+  static void ReadIniFile(string filename, bool isSystemParam);
+  static void InitEnumsFromStrings();
+  static bool CheckIfAllSet();
 };
 }
 

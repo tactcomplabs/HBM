@@ -31,83 +31,74 @@
 #ifndef TRANSACTION_H
 #define TRANSACTION_H
 
-//Transaction.h
-//
-//Header file for transaction object
-
 #include "SystemConfiguration.h"
 #include "BusPacket.h"
 
 using std::ostream; 
 
-namespace DRAMSim
-{
+namespace DRAMSim {
 enum TransactionType
 {
-	DATA_READ,
-	DATA_WRITE,
-	RETURN_DATA
+  DATA_READ,
+  DATA_WRITE,
+  RETURN_DATA
 };
 
 class Transaction
 {
-	Transaction();
-public:
-	//fields
-	TransactionType transactionType;
-	uint64_t address;
-	void *data;
-	uint64_t timeAdded;
-	uint64_t timeReturned;
+  private:
+    Transaction();
 
+  public:
+    friend ostream &operator<<(ostream &os, const Transaction &t);
 
-	friend ostream &operator<<(ostream &os, const Transaction &t);
-	//functions
-	Transaction(TransactionType transType, uint64_t addr, void *data);
-	Transaction(const Transaction &t);
+    Transaction(TransactionType transType, uint64_t addr, void *data);
+    Transaction(const Transaction &t);
 
-	BusPacketType getBusPacketType()
-	{
-		switch (transactionType)
-		{
-			case DATA_READ:
-			if (rowBufferPolicy == ClosePage)
-			{
-				return READ_P;
-			}
-			else if (rowBufferPolicy == OpenPage)
-			{
-				return READ; 
-			}
-			else
-			{
-				ERROR("Unknown row buffer policy");
-				abort();
-			}
-			break;
-		case DATA_WRITE:
-			if (rowBufferPolicy == ClosePage)
-			{
-				return WRITE_P;
-			}
-			else if (rowBufferPolicy == OpenPage)
-			{
-				return WRITE; 
-			}
-			else
-			{
-				ERROR("Unknown row buffer policy");
-				abort();
-			}
-			break;
-		default:
-			ERROR("This transaction type doesn't have a corresponding bus packet type");
-			abort();
-		}
-	}
-};
+    BusPacketType getBusPacketType()
+    {
+      BusPacketType busPacketType = INVALID;
+      switch (transactionType) {
+        case DATA_READ:
+          if (rowBufferPolicy == ClosePage)
+            busPacketType = READ_P;
+          else if (rowBufferPolicy == OpenPage)
+            busPacketType = READ; 
+          break;
 
-}
+        case DATA_WRITE:
+          if (rowBufferPolicy == ClosePage)
+            busPacketType = WRITE_P;
+          else if (rowBufferPolicy == OpenPage)
+            busPacketType = WRITE; 
+          break;
+
+        default:
+          ERROR("This transaction type doesn't have a corresponding bus packet type");
+          abort();
+          break;
+      }
+
+      return busPacketType;
+    }
+
+    TransactionType getTransactionType() { return transactionType; }
+    uint64_t getAddress() { return address; }
+    void *getData() { return data; }
+
+    void setTimeAdded(uint64_t t) { timeAdded = t; }
+    void setTimeReturned(uint64_t t) { timeReturned = t; }
+    uint64_t getTimeAdded() { return timeAdded; }
+    uint64_t getTImeReturned() { return timeReturned; }
+
+  private:
+    TransactionType transactionType;
+    uint64_t address;
+    void *data;
+    uint64_t timeAdded;
+    uint64_t timeReturned;
+}; //class Transaction
+} //namespace DRAMSim
 
 #endif
 

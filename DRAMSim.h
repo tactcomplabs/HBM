@@ -31,37 +31,28 @@
 
 #ifndef DRAMSIM_H
 #define DRAMSIM_H
-/*
- * This is a public header for DRAMSim including this along with libdramsim.so should
- * provide all necessary functionality to talk to an external simulator
- */
+
 #include "Callback.h"
 #include <string>
+
 using std::string;
 
 namespace DRAMSim 
 {
+  class MultiChannelMemorySystem 
+  {
+    public: 
+      bool addTransaction(bool isWrite, uint64_t addr);
+      void update();
+      void printStats(bool finalStats);
+      bool willAcceptTransaction(); 
+      bool willAcceptTransaction(uint64_t addr); 
 
-	class MultiChannelMemorySystem {
-		public: 
-			bool addTransaction(bool isWrite, uint64_t addr);
-			void setCPUClockSpeed(uint64_t cpuClkFreqHz);
-			void update();
-			void printStats(bool finalStats);
-			bool willAcceptTransaction(); 
-			bool willAcceptTransaction(uint64_t addr); 
-			std::ostream &getLogFile();
+      void RegisterCallbacks(TransactionCompleteCB *readDone, TransactionCompleteCB *writeDone);
+  };
 
-			void RegisterCallbacks( 
-				TransactionCompleteCB *readDone,
-				TransactionCompleteCB *writeDone,
-				void (*reportPower)(double bgpower, double burstpower, double refreshpower, double actprepower));
-			int getIniBool(const std::string &field, bool *val);
-			int getIniUint(const std::string &field, unsigned int *val);
-			int getIniUint64(const std::string &field, uint64_t *val);
-			int getIniFloat(const std::string &field, float *val);
-	};
-	MultiChannelMemorySystem *getMemorySystemInstance(const string &dev, const string &sys, const string &pwd, const string &trc, unsigned megsOfMemory, std::string *visfilename=NULL);
+  MultiChannelMemorySystem *getMemorySystemInstance(const string &dev, const string &sys, 
+      const string &pwd, unsigned megsOfMemory);
 }
 
 #endif

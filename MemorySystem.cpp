@@ -28,230 +28,124 @@
 *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *********************************************************************************/
 
-
-
-
-//MemorySystem.cpp
-//
-//Class file for JEDEC memory system wrapper
-//
-
 #include "MemorySystem.h"
 #include "IniReader.h"
 #include <unistd.h>
 
 using namespace std;
 
-
-ofstream cmd_verify_out; //used in Rank.cpp and MemoryController.cpp if VERIFICATION_OUTPUT is set
-
-unsigned NUM_DEVICES;
 unsigned NUM_RANKS;
 unsigned NUM_RANKS_LOG;
 
 namespace DRAMSim {
 
-powerCallBack_t MemorySystem::ReportPower = NULL;
-
-MemorySystem::MemorySystem(unsigned sid, unsigned cid, unsigned int megsOfMemory, CSVWriter &csvOut_, ostream &dramsim_log_) :
-		dramsim_log(dramsim_log_),
-		ReturnReadData(NULL),
-		WriteDataDone(NULL),
-    stackID(sid),
-		channelID(cid),
-		csvOut(csvOut_)
+MemorySystem::MemorySystem(unsigned sid, unsigned cid) :
+  ReturnReadData(NULL), 
+  WriteDataDone(NULL),
+  stackID(sid), 
+  channelID(cid)
 {
-	currentClockCycle = 0;
+  currentClockCycle = 0;
 
-	DEBUG("===== MemorySystem " << stackID << " ==== " << channelID << " =====");
+  DEBUG("====== Stack " << stackID << " - Channel" << channelID << " ======");
 
+  /*
+   * In legacy mode, each read or write transaction transfers 256 bits in a burst that consists of 2 
+   * cycles of 128 bits each. 
+   * In pseudo-channel mode, the 128-bit bus is split into 2 individual 64-bit segments. On each 
+   * segment, a read or write transaction transfers 256 bits as well, but in a burst that lasts 4 
+   * cycles (of 64 bits each).
+   *
+   * The pseudo channel concept essentially divides the memory of a single channel in half and 
+   * assigns each half to a fixed pseudo channel.
+   *
+   * Note that pseudo channel share the same address and command bus: you can send a command and 
+   * adresses to one pseudo channel or the other, but not to both.
+   */
 
-	//calculate the total storage based on the devices the user selected and the number of
+  if (operationMode == LegacyMode) {
+    // One rank with 128-bits bus width and burst length of 2.
+    NUM_RANKS = 1;
+  } else { // operationMode == PseudoChannelMode
+    // Each rank is regarded as a pseudo channel in PseudoChannelMode.
+    // Two ranks, each with 64-bits bus width and burst length of 4.
+    NUM_RANKS = 2;
+  }
 
-	//calculate number of devices
-	/************************
-	  This code has always been problematic even though it's pretty simple. I'll try to explain it 
-	  for my own sanity. 
+  NUM_RANKS_LOG = log2(NUM_RANKS);
 
-	  There are two main variables here that we could let the user choose:
-	  NUM_RANKS or TOTAL_STORAGE.  Since the density and width of the part is
-	  fixed by the device ini file, the only variable that is really
-	  controllable is the number of ranks. Users care more about choosing the
-	  total amount of storage, but with a fixed device they might choose a total
-	  storage that isn't possible. In that sense it's not as good to allow them
-	  to choose TOTAL_STORAGE (because any NUM_RANKS value >1 will be valid).
+  memoryController = new MemoryController(stackID, channelID, this);
 
-	  However, users don't care (or know) about ranks, they care about total
-	  storage, so maybe it's better to let them choose and just throw an error
-	  if they choose something invalid. 
+  ranks = new vector<Rank *>();
+  for (unsigned i = 0; i < NUM_RANKS; ++i) {
+    Rank *r = new Rank();
+    r->setId(i);
+    r->attachMemoryController(memoryController);
+    ranks->push_back(r);
+  }
 
-	  A bit of background: 
-
-	  Each column contains DEVICE_WIDTH bits. A row contains NUM_COLS columns.
-	  Each bank contains NUM_ROWS rows. Therefore, the total storage per DRAM device is: 
-	  		PER_DEVICE_STORAGE = NUM_ROWS*NUM_COLS*DEVICE_WIDTH*NUM_BANKS (in bits)
-
-	 A rank *must* have a 64 bit output bus (JEDEC standard), so each rank must have:
-	  		NUM_DEVICES_PER_RANK = 64/DEVICE_WIDTH  
-			(note: if you have multiple channels ganged together, the bus width is 
-			effectively NUM_CHANS * 64/DEVICE_WIDTH)
-	 
-	If we multiply these two numbers to get the storage per rank (in bits), we get:
-			PER_RANK_STORAGE = PER_DEVICE_STORAGE*NUM_DEVICES_PER_RANK = NUM_ROWS*NUM_COLS*NUM_BANKS*64 
-
-	Finally, to get TOTAL_STORAGE, we need to multiply by NUM_RANKS
-			TOTAL_STORAGE = PER_RANK_STORAGE*NUM_RANKS (total storage in bits)
-
-	So one could compute this in reverse -- compute NUM_DEVICES,
-	PER_DEVICE_STORAGE, and PER_RANK_STORAGE first since all these parameters
-	are set by the device ini. Then, TOTAL_STORAGE/PER_RANK_STORAGE = NUM_RANKS 
-
-	The only way this could run into problems is if TOTAL_STORAGE < PER_RANK_STORAGE,
-	which could happen for very dense parts.
-	*********************/
-
-	// number of bytes per rank is set to megsOfMemory, or the channel density; NUM_RANKS is always 1.
-  unsigned long megsOfStoragePerRank = megsOfMemory; 
-
-	// If this is set, effectively override the number of ranks
-	if (megsOfMemory != 0)
-	{
-		NUM_RANKS = megsOfMemory / megsOfStoragePerRank;
-		NUM_RANKS_LOG = dramsim_log2(NUM_RANKS);
-		if (NUM_RANKS == 0)
-		{
-			PRINT("WARNING: Cannot create memory system with "<<megsOfMemory<<"MB, defaulting to minimum size of "<<megsOfStoragePerRank<<"MB");
-			NUM_RANKS=1;
-		}
-	}
-
-  // NUM_DEVICES is used to estimate energy consumption per device.
-  // For now, let's just set NUM_DEVICES to 1.
-	NUM_DEVICES = JEDEC_DATA_BUS_BITS/DEVICE_WIDTH; 
-	TOTAL_STORAGE = (NUM_RANKS * megsOfStoragePerRank); 
-
-	DEBUG("CH. " <<channelID<<" TOTAL_STORAGE : "<< TOTAL_STORAGE << "MB | "<<NUM_RANKS<<" Ranks | "<< NUM_DEVICES <<" Devices per rank");
-
-	memoryController = new MemoryController(stackID, channelID, this, csvOut, dramsim_log);
-
-	// TODO: change to other vector constructor?
-	ranks = new vector<Rank *>();
-
-	for (size_t i=0; i<NUM_RANKS; i++)
-	{
-		Rank *r = new Rank(dramsim_log);
-		r->setId(i);
-		r->attachMemoryController(memoryController);
-		ranks->push_back(r);
-	}
-
-	memoryController->attachRanks(ranks);
-
+  memoryController->attachRanks(ranks);
 }
-
-
 
 MemorySystem::~MemorySystem()
 {
-	/* the MemorySystem should exist for all time, nothing should be destroying it */  
-//	ERROR("MEMORY SYSTEM DESTRUCTOR with ID "<<channelID);
-//	abort();
+  delete memoryController;
 
-	delete(memoryController);
+  for (unsigned i = 0; i < NUM_RANKS; ++i)
+    delete (*ranks)[i];
 
-	for (size_t i=0; i<NUM_RANKS; i++)
-	{
-		delete (*ranks)[i];
-	}
-	ranks->clear();
-	delete(ranks);
-
-	if (VERIFICATION_OUTPUT)
-	{
-		cmd_verify_out.flush();
-		cmd_verify_out.close();
-	}
+  delete ranks;
 }
 
 bool MemorySystem::WillAcceptTransaction()
 {
-	return memoryController->WillAcceptTransaction();
+  return memoryController->WillAcceptTransaction();
 }
 
 bool MemorySystem::addTransaction(bool isWrite, uint64_t addr)
 {
-	TransactionType type = isWrite ? DATA_WRITE : DATA_READ;
-	Transaction *trans = new Transaction(type,addr,NULL);
-	// push_back in memoryController will make a copy of this during
-	// addTransaction so it's kosher for the reference to be local 
+  TransactionType type = isWrite ? DATA_WRITE : DATA_READ;
+  Transaction *trans = new Transaction(type, addr, NULL);
 
-	if (memoryController->WillAcceptTransaction()) 
-	{
-		return memoryController->addTransaction(trans);
-	}
-	else
-	{
-		pendingTransactions.push_back(trans);
-		return true;
-	}
+  if (memoryController->WillAcceptTransaction()) {
+    return memoryController->addTransaction(trans);
+  } else {
+    pendingTransactions.push_back(trans);
+    return true;
+  }
 }
 
-bool MemorySystem::addTransaction(Transaction *trans)
-{
-	return memoryController->addTransaction(trans);
-}
-
-//prints statistics
 void MemorySystem::printStats(bool finalStats)
 {
-	memoryController->printStats(finalStats);
+  memoryController->printStats(finalStats);
 }
-
 
 //update the memory systems state
 void MemorySystem::update()
 {
+  for (unsigned i = 0; i < NUM_RANKS; ++i)
+    (*ranks)[i]->update();
 
-	//PRINT(" ----------------- Memory System Update ------------------");
+  if (pendingTransactions.size() > 0 && memoryController->WillAcceptTransaction()) {
+    memoryController->addTransaction(pendingTransactions.front());
+    pendingTransactions.pop_front();
+  }
 
-	//updates the state of each of the objects
-	// NOTE - do not change order
-	for (size_t i=0;i<NUM_RANKS;i++)
-	{
-		(*ranks)[i]->update();
-	}
-
-	//pendingTransactions will only have stuff in it if MARSS is adding stuff
-	if (pendingTransactions.size() > 0 && memoryController->WillAcceptTransaction())
-	{
-		memoryController->addTransaction(pendingTransactions.front());
-		pendingTransactions.pop_front();
-	}
-	memoryController->update();
-
-	//simply increments the currentClockCycle field for each object
-	for (size_t i=0;i<NUM_RANKS;i++)
-	{
-		(*ranks)[i]->step();
-	}
-	memoryController->step();
-	this->step();
-
-	//PRINT("\n"); // two new lines
+  memoryController->update();
+  
+  for (unsigned i = 0; i < NUM_RANKS; ++i) 
+    (*ranks)[i]->step();
+  memoryController->step();
+  this->step();
 }
 
-void MemorySystem::RegisterCallbacks( Callback_t* readCB, Callback_t* writeCB,
-                                      void (*reportPower)(double bgpower, double burstpower,
-                                                          double refreshpower, double actprepower))
+void MemorySystem::RegisterCallbacks(Callback_t* readCB, Callback_t* writeCB)
 {
-	ReturnReadData = readCB;
-	WriteDataDone = writeCB;
-	ReportPower = reportPower;
+  ReturnReadData = readCB;
+  WriteDataDone = writeCB;
 }
 
 } /*namespace DRAMSim */
-
-
 
 // This function can be used by autoconf AC_CHECK_LIB since
 // apparently it can't detect C++ functions.
@@ -263,4 +157,3 @@ extern "C"
 		;
 	}
 }
-

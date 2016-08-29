@@ -2,8 +2,7 @@
 *  Copyright (c) 2010-2011, Elliott Cooper-Balis
 *                             Paul Rosenfeld
 *                             Bruce Jacob
-*                             University of Maryland 
-*                             dramninjas [at] gmail [dot] com
+*                             University of Maryland dramninjas [at] gmail [dot] com
 *  All rights reserved.
 *  
 *  Redistribution and use in source and binary forms, with or without
@@ -28,65 +27,38 @@
 *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *********************************************************************************/
 #include <atomic>
+
 #include "SimulatorObject.h"
 #include "Transaction.h"
 #include "SystemConfiguration.h"
 #include "MemorySystem.h"
 #include "IniReader.h"
-#include "ClockDomain.h"
-#include "CSVWriter.h"
 
-
-namespace DRAMSim {
-
-
+namespace DRAMSim { 
 class MultiChannelMemorySystem : public SimulatorObject 
 {
-	public: 
+  public: 
+    MultiChannelMemorySystem(const string &dev, const string &sys, const string &pwd, unsigned 
+        megsOfMemory);
+    virtual ~MultiChannelMemorySystem();
+    bool addTransaction(bool isWrite, uint64_t addr);
+    bool willAcceptTransaction(uint64_t addr); 
+    void update();
+    void printStats(bool finalStats=false);
+    void RegisterCallbacks(TransactionCompleteCB *readDone, TransactionCompleteCB *writeDone);
 
-	MultiChannelMemorySystem(const string &dev, const string &sys, const string &pwd, const string &trc, unsigned megsOfMemory, string *visFilename=NULL, const IniReader::OverrideMap *paramOverrides=NULL);
-		virtual ~MultiChannelMemorySystem();
-			bool addTransaction(Transaction *trans);
-			bool addTransaction(const Transaction &trans);
-			bool addTransaction(bool isWrite, uint64_t addr);
-			bool willAcceptTransaction(); 
-			bool willAcceptTransaction(uint64_t addr); 
-			void update();
-			void printStats(bool finalStats=false);
-			ostream &getLogFile();
-			void RegisterCallbacks( 
-				TransactionCompleteCB *readDone,
-				TransactionCompleteCB *writeDone,
-				void (*reportPower)(double bgpower, double burstpower, double refreshpower, double actprepower));
-			int getIniBool(const std::string &field, bool *val);
-			int getIniUint(const std::string &field, unsigned int *val);
-			int getIniUint64(const std::string &field, uint64_t *val);
-			int getIniFloat(const std::string &field, float *val);
+  private:
+    unsigned findChannelNumber(uint64_t addr);
 
-	void InitOutputFiles(string tracefilename);
-	void setCPUClockSpeed(uint64_t cpuClkFreqHz);
-
-	//output file
-	std::ofstream visDataOut;
-	ofstream dramsim_log; 
-
-	private:
-		unsigned findChannelNumber(uint64_t addr);
-		void actual_update(); 
-		vector<MemorySystem*> channels; 
-    static std::atomic<int> stackCount;
+  private:
+    vector<MemorySystem*> channels; 
     unsigned stackID;
-		unsigned megsOfMemory; 
-		string deviceIniFilename;
-		string systemIniFilename;
-		string traceFilename;
-		string pwd;
-		string *visFilename;
-		ClockDomain::ClockDomainCrosser clockDomainCrosser; 
-		static void mkdirIfNotExist(string path);
-		static bool fileExists(string path); 
-		CSVWriter *csvOut; 
+    string deviceIniFilename;
+    string systemIniFilename;
+    string pwd;
+    unsigned megsOfMemory; 
 
-
-	};
-}
+  private:
+    static std::atomic<int> stackCount;
+}; //class MultiChannelMemorySystem
+} //namespace DRAMSim

@@ -1,47 +1,47 @@
 DRAMSim
 
 1. About DRAMSim ---------------------------------------------------------
-	DRAMSim is a cycle accurate model of a DRAM memory controller, the DRAM
-	modules which comprise system storage, and the bus by which they
-	communicate. All major components in a modern memory system are modeled
-	as their own respective objects within the source, including: ranks,
-	banks, command queue, the memory controller, etc.
+  DRAMSim is a cycle accurate model of a DRAM memory controller, the DRAM
+  modules which comprise system storage, and the bus by which they
+  communicate. All major components in a modern memory system are modeled
+  as their own respective objects within the source, including: ranks,
+  banks, command queue, the memory controller, etc.
 
-	The overarching goal is to have a simulator that is extremely small,
-	portable, and accurate. The simulator core has a well-defined interface
-	which allows it to be CPU simulator agnostic and should be easily
-	modifiably to work with any simulator.  This core has no external run
-	time or build time dependencies and has been tested with g++ on Linux
-	as well as g++ on Cygwin on Windows.  
+  The overarching goal is to have a simulator that is extremely small,
+  portable, and accurate. The simulator core has a well-defined interface
+  which allows it to be CPU simulator agnostic and should be easily
+  modifiably to work with any simulator.  This core has no external run
+  time or build time dependencies and has been tested with g++ on Linux
+  as well as g++ on Cygwin on Windows.  
 
 2. Building DRAMSim ---------------------------------------------------------
 
-	To build an optimized DRAMSim simply type
+  To build an optimized DRAMSim simply type
 
-	$ make
+  $ make
 
-	For a debug build which contains debugging symbols and verbose output, run:
+  For a debug build which contains debugging symbols and verbose output, run:
 
-	$ make DEBUG=1
+  $ make DEBUG=1
 
-	this will compile an executable called DRAMSim which can run a
-	trace-based simulation. 
+  this will compile an executable called DRAMSim which can run a
+  trace-based simulation. 
 
-	To build the DRAMSim library, type: 
+  To build the DRAMSim library, type: 
 
-	$ make libdramsim.so 
-	
+  $ make libdramsim.so 
+  
 
 3. Running DRAMSim -----------------------------------------------------------
-	
-	First, run the preprocessor on the gzipped traces:
+  
+  First, run the preprocessor on the gzipped traces:
 
-	cd traces
-	./traceParse.py k6_aoe_02_short.trc.gz
+  cd traces
+  ./traceParse.py k6_aoe_02_short.trc.gz
 
-	Then go back to the DRAMSim directory and run the trace based simulator:
-	cd ..
-	./DRAMSim -t traces/k6_aoe_02_short.trc -s system.ini -d ini/DDR3_micron_64M_8B_x4_sg15.ini -c 10000
+  Then go back to the DRAMSim directory and run the trace based simulator:
+  cd ..
+  ./DRAMSim -t traces/k6_aoe_02_short.trc -s system.ini -d ini/DDR3_micron_64M_8B_x4_sg15.ini -c 10000
 
 4. DRAMSim Output -------------------------------------------------------------
 
@@ -53,9 +53,9 @@ all DEBUG flags enabled, the following output is displayed for each cycle
 executed.  
 
    NOTE : BP = Bus Packet
-	  T  = Transaction
-	  MC = MemoryController
-	  R# = Rank (index #)
+    T  = Transaction
+    MC = MemoryController
+    R# = Rank (index #)
 
 -------------------------------------------------------------
  ----------------- Memory System Update ------------------
@@ -108,7 +108,7 @@ executed.
 
   Anything sent on the bus is encapsulated in an BusPacket (BP) object. 
   When printing, they display the following information:
-			 BP [ACT] pa[0x5dec818] r[1] b[1] row[1502] col[800]
+       BP [ACT] pa[0x5dec818] r[1] b[1] row[1502] col[800]
   The information displayed  is (in order):command type, physical address,
   rank #, bank#, row #, and column #.
 
@@ -120,29 +120,29 @@ executed.
 
 
   Lines beginning with " ++ " indicate power calculations, ie, 
-		 ++ Adding Read energy to total energy
- 		 ++ Adding IDD3N to total energy [from rank 0]
- 		 ++ Adding IDD3N to total energy [from rank 1]
+     ++ Adding Read energy to total energy
+      ++ Adding IDD3N to total energy [from rank 0]
+      ++ Adding IDD3N to total energy [from rank 1]
   The state of the system and the actions taken determine which current
   draw is used.  for further detail about each current, see micron data-
   sheet.
 
-	If a pending transaction is in the transaction queue, it will
+  If a pending transaction is in the transaction queue, it will
   be printed, as seen below:
-		 == Printing transaction queue		
-  	 		1]T [Read] [0x45bbfa4]
-  			2]T [Write] [0x55fbfa0] [5439E]
- 			  3]T [Write] [0x55fbfa8] [1111]
+     == Printing transaction queue    
+         1]T [Read] [0x45bbfa4]
+        2]T [Write] [0x55fbfa0] [5439E]
+         3]T [Write] [0x55fbfa8] [1111]
   Currently, at the start of every cycle, the head of the transaction
   queue is removed, broken up into DRAM commands and placed in the
   appropriate command queues.  To do this, an address mapping scheme
   is applied to the transaction's physical address, the output of 
   which is seen below:
-			== New Transaction - Mapping Address [0x5dec800]
-  			 Rank : 0
-				 Bank : 0
-				 Row  : 1502
-				 Col  : 800
+      == New Transaction - Mapping Address [0x5dec800]
+         Rank : 0
+         Bank : 0
+         Row  : 1502
+         Col  : 800
 
   If there are pending commands in the command queue, they will be
   printed.  The output is dependent on the designated structure for

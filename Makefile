@@ -1,4 +1,4 @@
-CXXFLAGS=-std=c++11 -DNO_STORAGE -Wall
+CXXFLAGS=-std=c++11 -Wall
 OPTFLAGS=-O3 
 
 ifdef DEBUG

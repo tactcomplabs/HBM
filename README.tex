@@ -11,10 +11,10 @@
 \begin{document}
 \title{DRAMSim2}
 \author{Elliott Cooper-Balis \\
-			Paul Rosenfeld \\
-			Bruce Jacob \\
-			University of Maryland \\
-			\texttt{\footnotesize dramninjas \textit{[at]} gmail \textit{[dot]} com}
+      Paul Rosenfeld \\
+      Bruce Jacob \\
+      University of Maryland \\
+      \texttt{\footnotesize dramninjas \textit{[at]} gmail \textit{[dot]} com}
 }
 \date{}
 \maketitle
@@ -94,15 +94,15 @@ microarchitectural techniques on a future generation memory system with
 future generations of DRAM devices.
 
 \section{About DRAMSim2}
-	DRAMSim2 is a cycle accurate model of a DRAM memory controller, the DRAM
-	modules which comprise system storage, and the buses by which they
-	communicate. 
+  DRAMSim2 is a cycle accurate model of a DRAM memory controller, the DRAM
+  modules which comprise system storage, and the buses by which they
+  communicate. 
 
-	The overarching goal is to have a simulator that is small,
-	portable, and accurate. The simulator core has a simple interface 
-	which allows it to be CPU simulator agnostic and should to work with any simulator (see section \ref{library}).  This core has no external run
-	time or build time dependencies and has been tested with g++ on Linux
-	as well as g++ on Cygwin on Windows.  
+  The overarching goal is to have a simulator that is small,
+  portable, and accurate. The simulator core has a simple interface 
+  which allows it to be CPU simulator agnostic and should to work with any simulator (see section \ref{library}).  This core has no external run
+  time or build time dependencies and has been tested with g++ on Linux
+  as well as g++ on Cygwin on Windows.  
 
 \section{Getting DRAMSim2}
 
@@ -113,17 +113,17 @@ DRAMSim2 is available on \href{http://github.com/dramninjasUMD}{github}. If you 
 
 
 \section{Building DRAMSim2}
-	To build an optimized standalone trace-based simulator called \texttt{DRAMSim} simply type:
+  To build an optimized standalone trace-based simulator called \texttt{DRAMSim} simply type:
 
-	\texttt{\$ make}
+  \texttt{\$ make}
 
-	For a debug build which contains debugging symbols and verbose output, run:
+  For a debug build which contains debugging symbols and verbose output, run:
 
-	\texttt{\$ make DEBUG=1}
+  \texttt{\$ make DEBUG=1}
 
-	To build the DRAMSim2 library, type: 
+  To build the DRAMSim2 library, type: 
 
-	\texttt{\$ make libdramsim.so }
+  \texttt{\$ make libdramsim.so }
 
 \section{Running DRAMSim2}
 \begin{minipage}{\textwidth}
@@ -140,40 +140,40 @@ To run the preprocessor (the preprocessor requires python):
 cd traces/
 ./traceParse.py k6_aoe_02_short.trc.gz
 \end{lstlisting}
-	This should produce the file \texttt{traces/k6\_aoe\_02\_short.trc}. Then, go back to the DRAMSim2 directory and run the trace based simulator:
+  This should produce the file \texttt{traces/k6\_aoe\_02\_short.trc}. Then, go back to the DRAMSim2 directory and run the trace based simulator:
 
 \begin{lstlisting}
 cd .
 ./DRAMSim -t traces/k6_aoe_02_short.trc -s system.ini -d ini/DDR3_micron_64M_8B_x4_sg15.ini -c 1000
 \end{lstlisting}
-	This will run a 1000 cycle simulation of the \texttt{k6\_aoe\_02\_short} trace using 
-	the specified DDR3 part. The -s, -d, and -t flags are required to run a simulation.
+  This will run a 1000 cycle simulation of the \texttt{k6\_aoe\_02\_short} trace using 
+  the specified DDR3 part. The -s, -d, and -t flags are required to run a simulation.
 
-	A full list of the command line arguments can be obtained by typing:
+  A full list of the command line arguments can be obtained by typing:
 \begin{lstlisting}
 $ ./DRAMSim --help
 DRAMSim2 Usage: 
 DRAMSim -t tracefile -s system.ini -d ini/device.ini [-c #] [-p pwd] -q
-	-t, --tracefile=FILENAME 	specify a tracefile to run  
-	-s, --systemini=FILENAME 	specify an ini file that describes the memory system parameters  
-	-d, --deviceini=FILENAME 	specify an ini file that describes the device-level parameters
-	-c, --numcycles=# 		specify number of cycles to run the simulation for [default=30] 
-	-q, --quiet 			flag to suppress simulation output (except final stats) [default=no]
-	-o, --option=OPTION_A=234			overwrite any ini file option from the command line
-	-p, --pwd=DIRECTORY		Set the working directory
+  -t, --tracefile=FILENAME   specify a tracefile to run  
+  -s, --systemini=FILENAME   specify an ini file that describes the memory system parameters  
+  -d, --deviceini=FILENAME   specify an ini file that describes the device-level parameters
+  -c, --numcycles=#     specify number of cycles to run the simulation for [default=30] 
+  -q, --quiet       flag to suppress simulation output (except final stats) [default=no]
+  -o, --option=OPTION_A=234      overwrite any ini file option from the command line
+  -p, --pwd=DIRECTORY    Set the working directory
 
 \end{lstlisting}
 
-	Some traces include timing information, which can be used
-	by the simulator or ignored. The benefit of ignoring timing information is that requests
-	will stream as fast as possible into the memory system and can serve as a good stress
-	test. To toggle the use of clock cycles, please change the \texttt{useClockCycle} flag in \texttt{TraceBasedSim.cpp}.
+  Some traces include timing information, which can be used
+  by the simulator or ignored. The benefit of ignoring timing information is that requests
+  will stream as fast as possible into the memory system and can serve as a good stress
+  test. To toggle the use of clock cycles, please change the \texttt{useClockCycle} flag in \texttt{TraceBasedSim.cpp}.
 
-	If you have a custom trace format you'd like to use, you can modify the \texttt{parseTraceFileLine()} function ton add
-	support for your own trace formats. 
+  If you have a custom trace format you'd like to use, you can modify the \texttt{parseTraceFileLine()} function ton add
+  support for your own trace formats. 
 
-	The prefix of the filename determines which type of trace this function will use (ex: k6\_foo.trc) will use the k6 format 
-	in \texttt{parseTraceFileLine()}.
+  The prefix of the filename determines which type of trace this function will use (ex: k6\_foo.trc) will use the k6 format 
+  in \texttt{parseTraceFileLine()}.
 \end{minipage}
 
 \subsection{Library Interface}\label{library}
@@ -208,7 +208,7 @@ all DEBUG flags enabled, the following output is displayed for each cycle
 executed.  
 
    \textbf{NOTE} : BP = Bus Packet, T  = Transaction \\ 
-					MC = MemoryController, R\# = Rank (index \#)
+          MC = MemoryController, R\# = Rank (index \#)
   
 \begin{lstlisting}
  ----------------- Memory System Update ------------------
@@ -281,19 +281,19 @@ Sender and receiver are indicated and the packet being sent is detailed.
 
 Lines beginning with " ++ " indicate power calculations, ie, 
 \begin{lstlisting}
-		 ++ Adding Read energy to total energy
- 		 ++ Adding IDD3N to total energy [from rank 0]
- 		 ++ Adding IDD3N to total energy [from rank 1]
+     ++ Adding Read energy to total energy
+      ++ Adding IDD3N to total energy [from rank 0]
+      ++ Adding IDD3N to total energy [from rank 1]
 \end{lstlisting}
 The state of the system and the actions taken determine which current draw is used. For further detail about each current value, see Micron datasheet.  
 
 
 If a pending transaction is in the transaction queue, it will be printed, as seen below:
 \begin{lstlisting}
-	 == Printing transaction queue		
-		1]T [Read] [0x45bbfa4]
-		2]T [Write] [0x55fbfa0] [5439E]
-		3]T [Write] [0x55fbfa8] [1111]
+   == Printing transaction queue    
+    1]T [Read] [0x45bbfa4]
+    2]T [Write] [0x55fbfa0] [5439E]
+    3]T [Write] [0x55fbfa8] [1111]
 \end{lstlisting}
 Currently, at the start of every cycle, the head of the transaction
 queue is removed, broken up into DRAM commands and placed in the
@@ -301,11 +301,11 @@ appropriate command queues.  To do this, an address mapping scheme
 is applied to the transaction's physical address, the output of 
 which is seen below:
 \begin{lstlisting}
-	== New Transaction - Mapping Address [0x5dec800] (read)
-	 Rank : 0
-		 Bank : 0
-		 Row  : 1502
-		 Col  : 800
+  == New Transaction - Mapping Address [0x5dec800] (read)
+   Rank : 0
+     Bank : 0
+     Row  : 1502
+     Col  : 800
 \end{lstlisting}
 
 If there are pending commands in the command queue, they will be

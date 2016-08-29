@@ -32,11 +32,6 @@
 #ifndef MEMORYCONTROLLER_H
 #define MEMORYCONTROLLER_H
 
-//MemoryController.h
-//
-//Header file for memory controller object
-//
-
 #include <map>
 #include <deque>
 
@@ -47,7 +42,6 @@
 #include "BusPacket.h"
 #include "BankState.h"
 #include "Rank.h"
-#include "CSVWriter.h"
 
 using namespace std;
 
@@ -87,86 +81,66 @@ class MemoryController : public SimulatorObject
 {
 
 public:
-	//functions
-	MemoryController(unsigned sid, unsigned cid, MemorySystem* ms, CSVWriter &csvOut_, ostream &dramsim_log_);
-	virtual ~MemoryController();
+  MemoryController(unsigned sid, unsigned cid, MemorySystem* ms);
+  virtual ~MemoryController();
 
-	bool addTransaction(Transaction *trans);
-	bool WillAcceptTransaction();
-	void returnReadData(const Transaction *trans);
-	void receiveFromBus(BusPacket *bpacket);
-	void attachRanks(vector<Rank *> *ranks);
-	void update();
-	void printStats(bool finalStats = false);
-	void resetStats(); 
+  bool addTransaction(Transaction *trans);
+  bool WillAcceptTransaction();
+  void returnReadData(Transaction *trans);
+  void receiveFromBus(BusPacket *bpacket);
+  void attachRanks(vector<Rank *> *ranks) { this->ranks = ranks; };
+  void updateBankStates();
+  void update();
+  void printStats(bool finalStats = false);
+  void resetStats(); 
 
+public:
+  vector<Transaction*> transactionQueue;
+#ifdef DEBUG_LATENCY
+  map<uint64_t, deque<LatencyBreakdown>> latencyBreakdowns;
+#endif
 
-	//fields
-	vector<Transaction *> transactionQueue;
 private:
   unsigned stackID;
   unsigned channelID;
 
-	ostream &dramsim_log;
-	vector< vector <BankState> > bankStates;
-	//functions
-	void insertHistogram(unsigned latencyValue, unsigned rank, unsigned bank);
+  MemorySystem* parentMemorySystem;
+  vector<vector<BankState>> bankStates;
 
-	//fields
-	MemorySystem *parentMemorySystem;
+  CommandQueue commandQueue;
+  BusPacket* poppedBusPacket;
+  vector<unsigned> refreshCountdown;
+  vector<BusPacket*> writeDataToSend;
+  vector<unsigned> writeDataCountdown;
+  vector<Transaction*> returnTransaction;
+  vector<Transaction*> pendingReadTransactions;
+  map<unsigned,unsigned> latencies; // latencyValue -> latencyCount
+  vector<bool> powerDown;
 
-	CommandQueue commandQueue;
-	BusPacket *poppedBusPacket;
-	vector<unsigned>refreshCountdown;
-	vector<BusPacket *> writeDataToSend;
-	vector<unsigned> writeDataCountdown;
-	vector<Transaction *> returnTransaction;
-	vector<Transaction *> pendingReadTransactions;
-	map<unsigned,unsigned> latencies; // latencyValue -> latencyCount
-	vector<bool> powerDown;
+  vector<Rank*>* ranks;
 
-  vector<Rank *> *ranks;
+  // these packets are counting down waiting to be transmitted on the "bus"
+  BusPacket* outgoingCmdPacket;
+  unsigned cmdCyclesLeft;
+  vector<BusPacket*> outgoingDataPackets;
+  vector<unsigned> dataCyclesLeft;
 
-	//output file
-	CSVWriter &csvOut; 
+  uint64_t totalTransactions;
+  vector<uint64_t> grandTotalBankAccesses; 
+  vector<uint64_t> totalReadsPerBank;
+  vector<uint64_t> totalWritesPerBank;
+  vector<uint64_t> totalReadsPerRank;
+  vector<uint64_t> totalWritesPerRank;
+  vector<uint64_t> totalEpochLatency;
 
-	// these packets are counting down waiting to be transmitted on the "bus"
-	BusPacket *outgoingCmdPacket;
-	unsigned cmdCyclesLeft;
-	BusPacket *outgoingDataPacket;
-	unsigned dataCyclesLeft;
+  unsigned channelBitWidth;
+  unsigned rankBitWidth;
+  unsigned bankBitWidth;
+  unsigned rowBitWidth;
+  unsigned colBitWidth;
+  unsigned byteOffsetWidth;
 
-	uint64_t totalTransactions;
-	vector<uint64_t> grandTotalBankAccesses; 
-	vector<uint64_t> totalReadsPerBank;
-	vector<uint64_t> totalWritesPerBank;
-
-	vector<uint64_t> totalReadsPerRank;
-	vector<uint64_t> totalWritesPerRank;
-
-
-	vector< uint64_t > totalEpochLatency;
-
-	unsigned channelBitWidth;
-	unsigned rankBitWidth;
-	unsigned bankBitWidth;
-	unsigned rowBitWidth;
-	unsigned colBitWidth;
-	unsigned byteOffsetWidth;
-
-
-	unsigned refreshRank;
-	
-public:
-	// energy values are per rank -- SST uses these directly, so make these public 
-	vector< uint64_t > backgroundEnergy;
-	vector< uint64_t > burstEnergy;
-	vector< uint64_t > actpreEnergy;
-	vector< uint64_t > refreshEnergy;
-
-#ifdef DEBUG_LATENCY
-  map<uint64_t, deque<LatencyBreakdown>> latencyBreakdowns;
-#endif
+  unsigned refreshRank;
 };
 }
 

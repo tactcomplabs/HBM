@@ -37,35 +37,28 @@
 
 #include <iostream>
 
-extern int SHOW_SIM_OUTPUT;
-
 #define ERROR(str) std::cerr<<"[ERROR ("<<__FILE__<<":"<<__LINE__<<")]: "<<str<<std::endl;
 
 using std::ostream;
 
 #ifdef DEBUG_BUILD
-	#define DEBUG(str)  std::cerr<< str <<std::endl;
-	#define DEBUGN(str) std::cerr<< str;
+  #define DEBUG(str)  std::cerr<< str <<std::endl;
+  #define DEBUGN(str) std::cerr<< str;
 #else
-	#define DEBUG(str) ;
-	#define DEBUGN(str) ;
+  #define DEBUG(str) ;
+  #define DEBUGN(str) ;
 #endif
 
 #ifdef NO_OUTPUT
-	#undef DEBUG
-	#undef DEBUGN
-	#define DEBUG(str) ;
-	#define DEBUGN(str) ;
-	#define PRINT(str) ;
-	#define PRINTN(str) ;
+  #undef DEBUG
+  #undef DEBUGN
+  #define DEBUG(str) ;
+  #define DEBUGN(str) ;
+  #define PRINT(str) ;
+  #define PRINTN(str) ;
 #else
-	#ifdef LOG_OUTPUT
-		#define PRINT(str)  { dramsim_log <<str<<std::endl; }
-		#define PRINTN(str) { dramsim_log <<str; }
-	#else
-		#define PRINT(str)  if(SHOW_SIM_OUTPUT) { std::cout <<str<<std::endl; }
-		#define PRINTN(str) if(SHOW_SIM_OUTPUT) { std::cout <<str; }
-	#endif
+  #define PRINT(str)  std::cout <<str<<std::endl;
+  #define PRINTN(str) std::cout <<str;
 #endif
 
 #endif /*PRINT_MACROS_H*/

@@ -27,105 +27,59 @@
 *  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *********************************************************************************/
+
 #include "SystemConfiguration.h"
 #include "AddressMapping.h"
 
+using namespace std;
+
 namespace DRAMSim {
 
-void addressMapping(uint64_t physicalAddress, unsigned &newTransactionChan, unsigned &newTransactionRank, unsigned &newTransactionBank, unsigned &newTransactionRow, unsigned &newTransactionColumn)
+unsigned sliceLowerBits(uint64_t& addr, unsigned bits)
 {
-  uint64_t tempA, tempB;
+  unsigned res = addr & ((1 << bits) - 1);
+  addr >>= bits;
+  return res;
+}
 
-  unsigned transactionSize = TRANSACTION_SIZE;
-  uint64_t transactionMask =  transactionSize - 1; //ex: (64 bit bus width) x (8 Burst Length) - 1 = 64 bytes - 1 = 63 = 0x3f mask
+void addressMapping(uint64_t addr, unsigned &chn, unsigned &rnk, unsigned &bnk, unsigned &row, 
+    unsigned &col)
+{
+  //uint64_t addr_old = addr;
 
-  unsigned channelBitWidth = NUM_CHANS_LOG;
-  unsigned rankBitWidth = NUM_RANKS_LOG;
-  unsigned bankBitWidth = NUM_BANKS_LOG;
-  unsigned rowBitWidth = NUM_ROWS_LOG;
-  unsigned colBitWidth = NUM_COLS_LOG;
-  unsigned byteOffsetWidth = BYTE_OFFSET_WIDTH;
+  unsigned tx_size = TRANSACTION_SIZE;
+  unsigned tx_bits = log2(tx_size);
 
-  // Since we're assuming that a request is for BL*BUS_WIDTH, the bottom bits
-  // of this address *should* be all zeros if it's not, issue a warning
-  if ((physicalAddress & transactionMask) != 0) {
-    DEBUG("WARNING: address 0x"<<std::hex<<physicalAddress<<std::dec<<" is not aligned to the request size of "<<transactionSize); 
-  }
+  unsigned chn_bits = NUM_CHANS_LOG;
+  unsigned rnk_bits = NUM_RANKS_LOG;
+  unsigned bnk_bits = NUM_BANKS_LOG;
+  unsigned row_bits = NUM_ROWS_LOG;
+  unsigned col_bits = NUM_COLS_LOG;
 
-  // taking into account 256-bit prefetch architecture
-  colBitWidth -= byteOffsetWidth;
+  // clear the lowest tx_bits since each transaction size is 2^tx_bits
+  addr >>= tx_bits;
 
-  // taking into account transaction size
-  physicalAddress >>= dramsim_log2(transactionSize);
-
-  if (DEBUG_ADDR_MAP) {
-    DEBUG("Bit widths: ch:"<<channelBitWidth<<" ra:"<<rankBitWidth<<" ba:"<<bankBitWidth
-        <<" ro:"<<rowBitWidth<<" co:"<<colBitWidth <<" off:"<<byteOffsetWidth 
-        << " Total:"<< (channelBitWidth + rankBitWidth + bankBitWidth + rowBitWidth + colBitWidth + byteOffsetWidth));
-  }
-
-  //perform various address mapping schemes
-  if (addressMappingScheme == RoBaRaCoCh) {
-    // row:bank:rank:col:chan
-    tempA = physicalAddress;
-    physicalAddress = physicalAddress >> channelBitWidth;
-    tempB = physicalAddress << channelBitWidth;
-    newTransactionChan = tempA ^ tempB;
-
-    tempA = physicalAddress;
-    physicalAddress = physicalAddress >> colBitWidth;
-    tempB = physicalAddress << colBitWidth;
-    newTransactionColumn = tempA ^ tempB;
-
-    tempA = physicalAddress;
-    physicalAddress = physicalAddress >> rankBitWidth;
-    tempB = physicalAddress << rankBitWidth;
-    newTransactionRank = tempA ^ tempB;
-
-    tempA = physicalAddress;
-    physicalAddress = physicalAddress >> bankBitWidth;
-    tempB = physicalAddress << bankBitWidth;
-    newTransactionBank = tempA ^ tempB;
-
-    tempA = physicalAddress;
-    physicalAddress = physicalAddress >> rowBitWidth;
-    tempB = physicalAddress << rowBitWidth;
-    newTransactionRow = tempA ^ tempB;
-  }
-  else if (addressMappingScheme == ChRaBaRoCo) {
-    // chan:rank:bank:row:col
-    tempA = physicalAddress;
-    physicalAddress = physicalAddress >> colBitWidth;
-    tempB = physicalAddress << colBitWidth;
-    newTransactionColumn = tempA ^ tempB;
-
-    tempA = physicalAddress;
-    physicalAddress = physicalAddress >> rowBitWidth;
-    tempB = physicalAddress << rowBitWidth;
-    newTransactionRow = tempA ^ tempB;
-
-    tempA = physicalAddress;
-    physicalAddress = physicalAddress >> bankBitWidth;
-    tempB = physicalAddress << bankBitWidth;
-    newTransactionBank = tempA ^ tempB;
-
-    tempA = physicalAddress;
-    physicalAddress = physicalAddress >> rankBitWidth;
-    tempB = physicalAddress << rankBitWidth;
-    newTransactionRank = tempA ^ tempB;
-
-    tempA = physicalAddress;
-    physicalAddress = physicalAddress >> channelBitWidth;
-    tempB = physicalAddress << channelBitWidth;
-    newTransactionChan = tempA ^ tempB;
-  }
-  else {
-    ERROR("== Error - Unknown Address Mapping Scheme");
+  // perform various address mapping schemes
+  if (addressMappingScheme == RoBaRaCoCh) { // row:bank:rank:col:chan
+    chn = sliceLowerBits(addr, chn_bits);
+    col = sliceLowerBits(addr, col_bits);
+    rnk = sliceLowerBits(addr, rnk_bits);
+    bnk = sliceLowerBits(addr, bnk_bits);
+    row = sliceLowerBits(addr, row_bits);
+  } else if (addressMappingScheme == ChRaBaRoCo) { // chan:rank:bank:row:col
+    col = sliceLowerBits(addr, col_bits);
+    row = sliceLowerBits(addr, row_bits);
+    bnk = sliceLowerBits(addr, bnk_bits);
+    rnk = sliceLowerBits(addr, rnk_bits);
+    chn = sliceLowerBits(addr, chn_bits);
+  } else {
+    ERROR("error - unknown address mapping scheme");
     exit(-1);
   }
 
   if (DEBUG_ADDR_MAP) {
-    DEBUG("Mapped Ch="<<newTransactionChan<<" Rank="<<newTransactionRank << " Bank="<<newTransactionBank<<" Row="<<newTransactionRow <<" Col="<<newTransactionColumn); 
+    DEBUG("addr:0x" << hex << addr_old << dec << " mapped to chan:" << chn << " rank:" << rnk << 
+        " bank:" << bnk << " row:" << row << " col:" << col); 
   }
 }
 

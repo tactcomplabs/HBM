@@ -50,32 +50,31 @@ namespace DRAMSim
 {
 enum CurrentBankState
 {
-	Idle,
-	RowActive,
-	Precharging,
-	Refreshing,
-	PowerDown
+  Idle,
+  RowActive,
+  Precharging,
+  Refreshing,
+  PowerDown
 };
 
 class BankState
 {
-	ostream &dramsim_log; 
 public:
-	//Fields
-	CurrentBankState currentBankState;
-	unsigned openRowAddress;
-	uint64_t nextRead;
-	uint64_t nextWrite;
-	uint64_t nextActivate;
-	uint64_t nextPrecharge;
-	uint64_t nextPowerUp;
+  //Fields
+  CurrentBankState currentBankState;
+  unsigned openRowAddress;
+  uint64_t nextRead;
+  uint64_t nextWrite;
+  uint64_t nextActivate;
+  uint64_t nextPrecharge;
+  uint64_t nextPowerUp;
 
-	BusPacketType lastCommand;
-	unsigned stateChangeCountdown;
+  BusPacketType lastCommand;
+  unsigned stateChangeCountdown;
 
-	//Functions
-	BankState(ostream &dramsim_log_);
-	void print();
+  //Functions
+  BankState();
+  void print();
 };
 }
 

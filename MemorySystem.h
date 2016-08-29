@@ -28,15 +28,8 @@
 *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *********************************************************************************/
 
-
-
 #ifndef MEMORYSYSTEM_H
 #define MEMORYSYSTEM_H
-
-//MemorySystem.h
-//
-//Header file for JEDEC memory system wrapper
-//
 
 #include "SimulatorObject.h"
 #include "SystemConfiguration.h"
@@ -44,7 +37,6 @@
 #include "Rank.h"
 #include "Transaction.h"
 #include "Callback.h"
-#include "CSVWriter.h"
 #include <deque>
 
 namespace DRAMSim
@@ -52,39 +44,27 @@ namespace DRAMSim
 typedef CallbackBase<void,unsigned,uint64_t,uint64_t> Callback_t;
 class MemorySystem : public SimulatorObject
 {
-	ostream &dramsim_log;
-public:
-	//functions
-	MemorySystem(unsigned sid, unsigned cid, unsigned megsOfMemory, CSVWriter &csvOut_, ostream &dramsim_log_);
-	virtual ~MemorySystem();
-	void update();
-	bool addTransaction(Transaction *trans);
-	bool addTransaction(bool isWrite, uint64_t addr);
-	void printStats(bool finalStats);
-	bool WillAcceptTransaction();
-	void RegisterCallbacks(
-	    Callback_t *readDone,
-	    Callback_t *writeDone,
-	    void (*reportPower)(double bgpower, double burstpower, double refreshpower, double actprepower));
+  public:
+    MemorySystem(unsigned sid, unsigned cid);
+    virtual ~MemorySystem();
+    void update();
+    bool addTransaction(bool isWrite, uint64_t addr);
+    void printStats(bool finalStats);
+    bool WillAcceptTransaction();
+    void RegisterCallbacks(Callback_t *readDone, Callback_t *writeDone);
 
-	//fields
-	MemoryController *memoryController;
-	vector<Rank *> *ranks;
-	deque<Transaction *> pendingTransactions; 
+  public:
+    Callback_t* ReturnReadData;
+    Callback_t* WriteDataDone;
+    unsigned stackID;
+    unsigned channelID;
 
-
-	//function pointers
-	Callback_t* ReturnReadData;
-	Callback_t* WriteDataDone;
-	//TODO: make this a functor as well?
-	static powerCallBack_t ReportPower;
-	unsigned stackID;
-	unsigned channelID;
-
-private:
-	CSVWriter &csvOut;
-};
-}
+  private:
+    MemoryController *memoryController;
+    vector<Rank *> *ranks;
+    deque<Transaction *> pendingTransactions; 
+}; //class MemorySystem
+} //namespace DRAMSim
 
 #endif
 

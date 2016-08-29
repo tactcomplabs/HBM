@@ -48,7 +48,7 @@ using namespace std;
 
 void SimulatorObject::step()
 {
-	currentClockCycle++;
+  currentClockCycle++;
 }
 
 

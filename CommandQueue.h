@@ -28,18 +28,8 @@
 *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *********************************************************************************/
 
-
-
-
-
-
 #ifndef CMDQUEUE_H
 #define CMDQUEUE_H
-
-//CommandQueue.h
-//
-//Header
-//
 
 #include "BusPacket.h"
 #include "BankState.h"
@@ -49,54 +39,61 @@
 
 using namespace std;
 
-namespace DRAMSim
-{
+namespace DRAMSim {
 class CommandQueue : public SimulatorObject
 {
-	CommandQueue();
-	ostream &dramsim_log;
-public:
-	//typedefs
-	typedef vector<BusPacket *> BusPacket1D;
-	typedef vector<BusPacket1D> BusPacket2D;
-	typedef vector<BusPacket2D> BusPacket3D;
+  private:
+    CommandQueue();
 
-	//functions
-	CommandQueue(vector< vector<BankState> > &states, ostream &dramsim_log);
-	virtual ~CommandQueue(); 
+  public:
+    CommandQueue(vector<vector<BankState>> &states);
+    virtual ~CommandQueue(); 
 
-	void enqueue(BusPacket *newBusPacket);
-	bool pop(BusPacket **busPacket);
-	bool hasRoomFor(unsigned numberToEnqueue, unsigned rank, unsigned bank);
-	bool isIssuable(BusPacket *busPacket);
-	bool isEmpty(unsigned rank);
-	void needRefresh(unsigned rank);
-	void print();
-	void update(); //SimulatorObject requirement
-	vector<BusPacket *> &getCommandQueue(unsigned rank, unsigned bank);
+    void enqueue(BusPacket *newBusPacket)
+    {
+      queues[newBusPacket->rank].push_back(newBusPacket);
+    }
 
-	//fields
-	
-	BusPacket3D queues; // 3D array of BusPacket pointers
-	vector< vector<BankState> > &bankStates;
-private:
-	void nextRankAndBank(unsigned &rank, unsigned &bank);
-	//fields
-	unsigned nextBank;
-	unsigned nextRank;
+    bool pop(BusPacket **busPacket);
+    bool hasRoomFor(unsigned numberToEnqueue, unsigned rank);
+    bool isIssuable(BusPacket *busPacket);
 
-	unsigned nextBankPRE;
-	unsigned nextRankPRE;
+    bool isEmpty(unsigned rank)
+    {
+      return queues[rank].empty();
+    }
 
-	unsigned refreshRank;
-	bool refreshWaiting;
+    // indicate a particular rank is in need of a refresh
+    void needRefresh(unsigned rank) 
+    {
+      refreshWaiting = true;
+      refreshRank = rank;
+    }
+    void print();
+    void update() //SimulatorObject requirement
+    {
+      // do nothing since pop() is effectively update(),
+      // TODO: make CommandQueue not a SimulatorObject
+    } 
 
-	vector< vector<unsigned> > tFAWCountdown;
-	vector< vector<unsigned> > rowAccessCounters;
+  public:
+    vector<vector<BusPacket*>> queues;
+    vector<vector<BankState>> &bankStates;
 
-	bool sendAct;
-};
-}
+  private:
+    void nextRankAndBank(unsigned &rank, unsigned &bank);
+    unsigned nextRank;
+    unsigned nextBank;
+    unsigned nextRankPRE;
+    unsigned nextBankPRE;
+
+    unsigned refreshRank;
+    bool refreshWaiting;
+
+    vector<vector<unsigned>> tFAWCountdown;
+    vector<vector<unsigned>> rowAccessCounters;
+}; //class CommandQueue
+} //namespace DRAMSim
 
 #endif
 

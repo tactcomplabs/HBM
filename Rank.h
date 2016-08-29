@@ -37,7 +37,6 @@
 #include "SimulatorObject.h"
 #include "BusPacket.h"
 #include "SystemConfiguration.h"
-#include "Bank.h"
 #include "BankState.h"
 
 using namespace std;
@@ -48,38 +47,38 @@ namespace DRAMSim
 class MemoryController; //forward declaration
 class Rank : public SimulatorObject
 {
+public:
+  Rank();
+  virtual ~Rank(); 
+  void receiveFromBus(BusPacket *packet);
+
+  // this must be called before any other functions are called
+  void attachMemoryController(MemoryController *mc) { this->memoryController = mc; };
+
+  int getId() const { return id; };
+  void setId(int id) { this->id = id; };
+
+  void update();
+  void powerUp();
+  void powerDown();
+  
 private:
-	int id;
-	ostream &dramsim_log; 
-	unsigned incomingWriteBank;
-	unsigned incomingWriteRow;
-	unsigned incomingWriteColumn;
-	bool isPowerDown;
+  int id;
+  unsigned incomingWriteBank;
+  unsigned incomingWriteRow;
+  unsigned incomingWriteColumn;
+  bool isPowerDown;
 
 public:
-	//functions
-	Rank(ostream &dramsim_log_);
-	virtual ~Rank(); 
-	void receiveFromBus(BusPacket *packet);
-	void attachMemoryController(MemoryController *mc);
-	int getId() const;
-	void setId(int id);
-	void update();
-	void powerUp();
-	void powerDown();
-
-	//fields
-	MemoryController *memoryController;
-	BusPacket *outgoingDataPacket;
-	unsigned dataCyclesLeft;
-	bool refreshWaiting;
-
-	//these are vectors so that each element is per-bank
-	vector<BusPacket *> readReturnPacket;
-	vector<unsigned> readReturnCountdown;
-	vector<Bank> banks;
-	vector<BankState> bankStates;
-
+  MemoryController *memoryController;
+  BusPacket *outgoingDataPacket;
+  unsigned dataCyclesLeft;
+  bool refreshWaiting;
+  
+  //these are vectors so that each element is per-bank
+  vector<BusPacket*> readReturnPacket;
+  vector<unsigned> readReturnCountdown;
+  vector<BankState> bankStates;
 };
 }
 #endif
