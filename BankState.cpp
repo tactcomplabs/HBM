@@ -28,24 +28,11 @@
 *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *********************************************************************************/
 
-
-
-
-
-
-
-
-//BankState.cpp
-//
-//Class file for bank state object
-//
-
 #include "BankState.h"
 
 using namespace std;
 using namespace DRAMSim;
 
-//All banks start precharged
 BankState::BankState():
     currentBankState(Idle),
     openRowAddress(0),
@@ -61,20 +48,13 @@ BankState::BankState():
 void BankState::print()
 {
   PRINT(" == Bank State ");
-  if (currentBankState == Idle)
-  {
+  if (currentBankState == Idle) {
     PRINT("    State : Idle" );
-  }
-  else if (currentBankState == RowActive)
-  {
+  } else if (currentBankState == RowActive) {
     PRINT("    State : Active" );
-  }
-  else if (currentBankState == Refreshing)
-  {
+  } else if (currentBankState == Refreshing) {
     PRINT("    State : Refreshing" );
-  }
-  else if (currentBankState == PowerDown)
-  {
+  } else if (currentBankState == PowerDown) {
     PRINT("    State : Power Down" );
   }
 

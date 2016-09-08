@@ -42,7 +42,8 @@ enum BusPacketType
   WRITE_P,
   ACTIVATE,
   PRECHARGE,
-  REFRESH,
+  REFRESH, // REFRESH ALL BANKS
+  REFRESH_SB, // REFRESH SINGLE BANK
   DATA,
   INVALID
 };
@@ -65,6 +66,7 @@ class BusPacket
     unsigned column;
     unsigned row;
     unsigned bank;
+    unsigned bankGroup;
     unsigned rank;
     uint64_t physicalAddress;
     void *data;

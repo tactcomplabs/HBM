@@ -39,6 +39,7 @@ BusPacket::BusPacket(BusPacketType packtype, uint64_t physicalAddr,
   column(col),
   row(rw),
   bank(b),
+  bankGroup(b/NUM_BANKS_PER_BANKGROUP),
   rank(r),
   physicalAddress(physicalAddr),
   data(dat)

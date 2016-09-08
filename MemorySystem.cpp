@@ -36,6 +36,7 @@ using namespace std;
 
 unsigned NUM_RANKS;
 unsigned NUM_RANKS_LOG;
+unsigned NUM_BANKS_PER_BANKGROUP;
 
 namespace DRAMSim {
 
@@ -73,6 +74,7 @@ MemorySystem::MemorySystem(unsigned sid, unsigned cid) :
   }
 
   NUM_RANKS_LOG = log2(NUM_RANKS);
+  NUM_BANKS_PER_BANKGROUP = NUM_BANKS / NUM_BANKGROUPS;
 
   memoryController = new MemoryController(stackID, channelID, this);
 

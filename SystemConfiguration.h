@@ -59,10 +59,12 @@ extern bool DEBUG_BANKS;
 extern bool DEBUG_POWER;
 extern bool VIS_FILE_OUTPUT;
 
+extern unsigned NUM_BANKGROUPS;
 extern unsigned NUM_BANKS;
 extern unsigned NUM_BANKS_LOG;
 extern unsigned NUM_RANKS;
 extern unsigned NUM_RANKS_LOG;
+extern unsigned NUM_BANKS_PER_BANKGROUP;
 extern unsigned NUM_CHANS;
 extern unsigned NUM_CHANS_LOG;
 extern unsigned NUM_ROWS;
@@ -85,12 +87,15 @@ extern unsigned AL;
 extern unsigned BL;
 extern unsigned tRAS;
 extern unsigned tRCD;
-extern unsigned tRRD;
+extern unsigned tRRDS;
+extern unsigned tRRDL;
 extern unsigned tRC;
 extern unsigned tRP;
-extern unsigned tCCD;
+extern unsigned tCCDS;
+extern unsigned tCCDL;
 extern unsigned tRTP;
-extern unsigned tWTR;
+extern unsigned tWTRS;
+extern unsigned tWTRL;
 extern unsigned tWR;
 extern unsigned tRTRS;
 extern unsigned tRFC;
@@ -103,12 +108,11 @@ extern unsigned tCMD;
 /* For power parameters (current and voltage), see externs in MemoryController.cpp */ 
 
 //same bank
-#define READ_TO_PRE_DELAY (AL+BL/2+ max(tRTP,tCCD)-tCCD)
+#define READ_TO_PRE_DELAY (AL+BL/2+ max(tRTP,tCCDS)-tCCDS)
 #define WRITE_TO_PRE_DELAY (WL+BL/2+tWR)
 #define READ_TO_WRITE_DELAY (RL+BL/2+tRTRS-WL)
 #define READ_AUTOPRE_DELAY (AL+tRTP+tRP)
 #define WRITE_AUTOPRE_DELAY (WL+BL/2+tWR+tRP)
-#define WRITE_TO_READ_DELAY_B (WL+BL/2+tWTR) //interbank
 #define WRITE_TO_READ_DELAY_R (WL+BL/2+tRTRS-RL) //interrank
 
 extern unsigned JEDEC_DATA_BUS_BITS;
@@ -125,6 +129,7 @@ extern std::string ROW_BUFFER_POLICY;
 extern std::string SCHEDULING_POLICY;
 extern std::string ADDRESS_MAPPING_SCHEME;
 extern std::string MODE;
+extern bool BANK_GROUPS_ENABLED;
 
 enum TraceType
 {

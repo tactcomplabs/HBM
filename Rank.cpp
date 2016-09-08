@@ -74,9 +74,26 @@ void Rank::receiveFromBus(BusPacket *packet)
       bankStates[packet->bank].nextPrecharge = max(currentClockCycle + READ_TO_PRE_DELAY, 
           bankStates[packet->bank].nextPrecharge);
       for (unsigned i = 0; i < NUM_BANKS; ++i) {
-        bankStates[i].nextRead = max(currentClockCycle + max(BL/2, tCCD), bankStates[i].nextRead);
-        bankStates[i].nextWrite = max(currentClockCycle + READ_TO_WRITE_DELAY,
-            bankStates[i].nextWrite);
+        if (BANK_GROUPS_ENABLED) {
+          if (packet->bankGroup == i / NUM_BANKS_PER_BANKGROUP) {
+            // Accesses within the same bank group
+            bankStates[i].nextRead = max(currentClockCycle + max(BL/2, tCCDL), 
+                bankStates[i].nextRead);
+            bankStates[i].nextWrite = max(currentClockCycle + READ_TO_WRITE_DELAY,
+                bankStates[i].nextWrite);
+          } else {
+            // Accesses to different bank groups
+            bankStates[i].nextRead = max(currentClockCycle + max(BL/2, tCCDS), 
+                bankStates[i].nextRead);
+            bankStates[i].nextWrite = max(currentClockCycle + READ_TO_WRITE_DELAY,
+                bankStates[i].nextWrite);
+          }
+        } else { // BANK_GROUPS_DISABLED
+          bankStates[i].nextRead = max(currentClockCycle + max(BL/2, tCCDS), 
+              bankStates[i].nextRead);
+          bankStates[i].nextWrite = max(currentClockCycle + READ_TO_WRITE_DELAY,
+              bankStates[i].nextWrite);
+        }
       }
 
       packet->busPacketType = DATA;
@@ -98,10 +115,28 @@ void Rank::receiveFromBus(BusPacket *packet)
       bankStates[packet->bank].nextActivate = max(currentClockCycle + READ_AUTOPRE_DELAY,
           bankStates[packet->bank].nextActivate);
       for (unsigned i = 0; i < NUM_BANKS; ++i) {
-        //will set next read/write for all banks - including current (which shouldnt matter since its now idle)
-        bankStates[i].nextRead = max(currentClockCycle + max(BL/2, tCCD), bankStates[i].nextRead);
-        bankStates[i].nextWrite = max(currentClockCycle + READ_TO_WRITE_DELAY,
-            bankStates[i].nextWrite);
+        // set next read/write for all banks - including current 
+        // should not matter since it's now idle
+        if (BANK_GROUPS_ENABLED) {
+          if (packet->bankGroup == i / NUM_BANKS_PER_BANKGROUP) {
+            // Accesses within the same bank group
+            bankStates[i].nextRead = max(currentClockCycle + max(BL/2, tCCDL), 
+                bankStates[i].nextRead);
+            bankStates[i].nextWrite = max(currentClockCycle + READ_TO_WRITE_DELAY,
+                bankStates[i].nextWrite);
+          } else {
+            // Accesses to different bank groups
+            bankStates[i].nextRead = max(currentClockCycle + max(BL/2, tCCDS), 
+                bankStates[i].nextRead);
+            bankStates[i].nextWrite = max(currentClockCycle + READ_TO_WRITE_DELAY,
+                bankStates[i].nextWrite);
+          }
+        } else { // BANK_GROUPS_DISABLED
+          bankStates[i].nextRead = max(currentClockCycle + max(BL/2, tCCDS), 
+              bankStates[i].nextRead);
+          bankStates[i].nextWrite = max(currentClockCycle + READ_TO_WRITE_DELAY,
+              bankStates[i].nextWrite);
+        }
       }
 
       packet->busPacketType = DATA;
@@ -110,7 +145,7 @@ void Rank::receiveFromBus(BusPacket *packet)
       break;
 
     case WRITE:
-      //make sure a write is allowed
+      // make sure a write is allowed
       if (bankStates[packet->bank].currentBankState != RowActive || 
           currentClockCycle < bankStates[packet->bank].nextWrite || 
           packet->row != bankStates[packet->bank].openRowAddress) {
@@ -119,16 +154,33 @@ void Rank::receiveFromBus(BusPacket *packet)
         exit(0);
       }
 
-      //update state table
+      // update state table
       bankStates[packet->bank].nextPrecharge = max(currentClockCycle + WRITE_TO_PRE_DELAY,
           bankStates[packet->bank].nextPrecharge);
       for (unsigned i = 0; i < NUM_BANKS; ++i) {
-        bankStates[i].nextRead = max(currentClockCycle + WRITE_TO_READ_DELAY_B,
-            bankStates[i].nextRead);
-        bankStates[i].nextWrite = max(currentClockCycle + max(BL/2, tCCD), bankStates[i].nextWrite);
+        if (BANK_GROUPS_ENABLED) {
+          if (packet->bankGroup == i / NUM_BANKS_PER_BANKGROUP) {
+            // Accesses within the same bank group
+            bankStates[i].nextRead = max(currentClockCycle + WL + BL/2 + tWTRL, 
+                bankStates[i].nextRead);
+            bankStates[i].nextWrite = max(currentClockCycle + max(BL/2, tCCDL), 
+                bankStates[i].nextWrite);
+          } else {
+            // Accesses to different bank groups
+            bankStates[i].nextRead = max(currentClockCycle + WL + BL/2 + tWTRS, 
+                bankStates[i].nextRead);
+            bankStates[i].nextWrite = max(currentClockCycle + max(BL/2, tCCDS), 
+                bankStates[i].nextWrite);
+          }
+        } else { // BANK_GROUPS_DISABLED
+          bankStates[i].nextRead = max(currentClockCycle + WL + BL/2 + tWTRS, 
+              bankStates[i].nextRead);
+          bankStates[i].nextWrite = max(currentClockCycle + max(BL/2, tCCDS), 
+              bankStates[i].nextWrite);
+        }
       }
 
-      //take note of where data is going when it arrives
+      // take note of where data is going when it arrives
       incomingWriteBank = packet->bank;
       incomingWriteRow = packet->row;
       incomingWriteColumn = packet->column;
@@ -149,9 +201,26 @@ void Rank::receiveFromBus(BusPacket *packet)
       bankStates[packet->bank].nextActivate = max(currentClockCycle + WRITE_AUTOPRE_DELAY,
           bankStates[packet->bank].nextActivate);
       for (unsigned i = 0; i < NUM_BANKS; ++i) {
-        bankStates[i].nextWrite = max(currentClockCycle + max(BL/2, tCCD), bankStates[i].nextWrite);
-        bankStates[i].nextRead = max(currentClockCycle + WRITE_TO_READ_DELAY_B,
-            bankStates[i].nextRead);
+        if (BANK_GROUPS_ENABLED) {
+          if (packet->bankGroup == i / NUM_BANKS_PER_BANKGROUP) {
+            // Accesses within the same bank group
+            bankStates[i].nextWrite = max(currentClockCycle + max(BL/2, tCCDL), 
+                bankStates[i].nextWrite);
+            bankStates[i].nextRead = max(currentClockCycle + WL + BL/2 + tWTRL, 
+                bankStates[i].nextRead);
+          } else {
+            // Accesses to different bank groups
+            bankStates[i].nextWrite = max(currentClockCycle + max(BL/2, tCCDS), 
+                bankStates[i].nextWrite);
+            bankStates[i].nextRead = max(currentClockCycle + WL + BL/2 + tWTRS, 
+                bankStates[i].nextRead);
+          }
+        } else { //BANK_GROUPS_DISABLED
+          bankStates[i].nextWrite = max(currentClockCycle + max(BL/2, tCCDS), 
+              bankStates[i].nextWrite);
+          bankStates[i].nextRead = max(currentClockCycle + WL + BL/2 + tWTRS, 
+              bankStates[i].nextRead);
+        }
       }
 
       //take note of where data is going when it arrives
@@ -186,8 +255,21 @@ void Rank::receiveFromBus(BusPacket *packet)
 
       bankStates[packet->bank].nextPrecharge = currentClockCycle + tRAS;
       for (unsigned i = 0; i < NUM_BANKS; ++i) {
-        if (i != packet->bank)
-          bankStates[i].nextActivate = max(currentClockCycle + tRRD, bankStates[i].nextActivate);
+        if (BANK_GROUPS_ENABLED) {
+          if (i != packet->bank) {
+            if (packet->bankGroup == i / NUM_BANKS_PER_BANKGROUP)
+              // Accesses within the same bank group
+              bankStates[i].nextActivate = max(currentClockCycle + tRRDL, 
+                  bankStates[i].nextActivate);
+            else
+              // Accesses to different bank groups
+              bankStates[i].nextActivate = max(currentClockCycle + tRRDS, 
+                  bankStates[i].nextActivate);
+          }
+        } else { // BANK_GROUPS_DISABLED
+          if (i != packet->bank)
+            bankStates[i].nextActivate = max(currentClockCycle + tRRDS, bankStates[i].nextActivate);
+        }
       }
       delete(packet); 
       break;

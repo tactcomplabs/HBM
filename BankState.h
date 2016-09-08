@@ -28,53 +28,40 @@
 *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *********************************************************************************/
 
-
-
-
-
-
-
-
 #ifndef BANKSTATE_H
 #define BANKSTATE_H
-
-//BankState.h
-//
-//Header file for bank state class
-//
 
 #include "SystemConfiguration.h"
 #include "BusPacket.h"
 
-namespace DRAMSim
-{
+namespace DRAMSim {
 enum CurrentBankState
 {
   Idle,
   RowActive,
   Precharging,
   Refreshing,
+  SelfRefreshing,
   PowerDown
 };
 
 class BankState
 {
-public:
-  //Fields
-  CurrentBankState currentBankState;
-  unsigned openRowAddress;
-  uint64_t nextRead;
-  uint64_t nextWrite;
-  uint64_t nextActivate;
-  uint64_t nextPrecharge;
-  uint64_t nextPowerUp;
+  public:
+    CurrentBankState currentBankState;
+    unsigned openRowAddress;
+    uint64_t nextRead;
+    uint64_t nextWrite;
+    uint64_t nextActivate;
+    uint64_t nextPrecharge;
+    uint64_t nextPowerUp;
 
-  BusPacketType lastCommand;
-  unsigned stateChangeCountdown;
+    BusPacketType lastCommand;
+    unsigned stateChangeCountdown;
 
-  //Functions
-  BankState();
-  void print();
+  public:
+    BankState();
+    void print();
 };
 }
 

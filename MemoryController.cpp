@@ -279,10 +279,26 @@ void MemoryController::update()
                     bankStates[i][j].nextWrite);
               }
             } else {
-              bankStates[i][j].nextRead = max(currentClockCycle + max(tCCD, BL/2),
-                  bankStates[i][j].nextRead);
-              bankStates[i][j].nextWrite = max(currentClockCycle + READ_TO_WRITE_DELAY,
-                  bankStates[i][j].nextWrite);
+              if (BANK_GROUPS_ENABLED) {
+                if (poppedBusPacket->bankGroup == j / NUM_BANKS_PER_BANKGROUP) {
+                  // Accesses within the same bank group
+                  bankStates[i][j].nextRead = max(currentClockCycle + max(tCCDL, BL/2),
+                      bankStates[i][j].nextRead);
+                  bankStates[i][j].nextWrite = max(currentClockCycle + READ_TO_WRITE_DELAY,
+                      bankStates[i][j].nextWrite);
+                } else {
+                  // Accesses to different bank groups
+                  bankStates[i][j].nextRead = max(currentClockCycle + max(tCCDS, BL/2),
+                      bankStates[i][j].nextRead);
+                  bankStates[i][j].nextWrite = max(currentClockCycle + READ_TO_WRITE_DELAY,
+                      bankStates[i][j].nextWrite);
+                }
+              } else { // BANK_GROUPS_DISABLED
+                bankStates[i][j].nextRead = max(currentClockCycle + max(tCCDS, BL/2),
+                    bankStates[i][j].nextRead);
+                bankStates[i][j].nextWrite = max(currentClockCycle + READ_TO_WRITE_DELAY,
+                    bankStates[i][j].nextWrite);
+              }
             }
           }
         }
@@ -319,18 +335,34 @@ void MemoryController::update()
                     bankStates[i][j].nextRead);
               }
             } else {
-              bankStates[i][j].nextWrite = max(currentClockCycle + max(BL/2, tCCD),
-                  bankStates[i][j].nextWrite);
-              bankStates[i][j].nextRead = max(currentClockCycle + WRITE_TO_READ_DELAY_B,
-                  bankStates[i][j].nextRead);
+              if (BANK_GROUPS_ENABLED) {
+                if (poppedBusPacket->bankGroup == j / NUM_BANKS_PER_BANKGROUP) { 
+                  // Accesses within the same bank group
+                  bankStates[i][j].nextWrite = max(currentClockCycle + max(BL/2, tCCDL),
+                      bankStates[i][j].nextWrite);
+                  bankStates[i][j].nextRead = max(currentClockCycle + WL + BL/2 + tWTRL,
+                      bankStates[i][j].nextRead);
+                } else { 
+                  // Accesses to different bank groups
+                  bankStates[i][j].nextWrite = max(currentClockCycle + max(BL/2, tCCDS),
+                      bankStates[i][j].nextWrite);
+                  bankStates[i][j].nextRead = max(currentClockCycle + WL + BL/2 + tWTRS,
+                      bankStates[i][j].nextRead);
+                }
+              } else { // BANK_GROUPS_DISABLED
+                bankStates[i][j].nextWrite = max(currentClockCycle + max(BL/2, tCCDS),
+                    bankStates[i][j].nextWrite);
+                bankStates[i][j].nextRead = max(currentClockCycle + WL + BL/2 + tWTRS, 
+                    bankStates[i][j].nextRead);
+              }
             }
           }
         }
 
         if (poppedBusPacket->busPacketType == WRITE_P) {
-          //set nextRead and nextWrite to nextActivate so the state table will prevent a read or 
-          //write from being issued before the bank state has been changed because of the 
-          //auto-precharge associated with this command
+          // set nextRead and nextWrite to nextActivate so the state table will prevent a read or 
+          // write from being issued before the bank state has been changed because of the 
+          // auto-precharge associated with this command
           bankStates[rank][bank].nextRead = bankStates[rank][bank].nextActivate;
           bankStates[rank][bank].nextWrite = bankStates[rank][bank].nextActivate;
         }
@@ -345,16 +377,29 @@ void MemoryController::update()
         bankStates[rank][bank].nextPrecharge = max(currentClockCycle + tRAS,
             bankStates[rank][bank].nextPrecharge);
 
-        //if we are using posted-CAS, the next column access can be sooner than normal operation
+        // if we are using posted-CAS, the next column access can be sooner than normal operation
         bankStates[rank][bank].nextRead = max(currentClockCycle + (tRCD-AL),
             bankStates[rank][bank].nextRead);
         bankStates[rank][bank].nextWrite = max(currentClockCycle + (tRCD-AL),
             bankStates[rank][bank].nextWrite);
 
         for (unsigned i = 0; i < NUM_BANKS; ++i) {
-          if (i != poppedBusPacket->bank)
-            bankStates[rank][i].nextActivate = max(currentClockCycle + tRRD,
-                bankStates[rank][i].nextActivate);
+          if (BANK_GROUPS_ENABLED) {
+            if (i != poppedBusPacket->bank) {
+              if (poppedBusPacket->bankGroup == i / NUM_BANKS_PER_BANKGROUP)
+                // Accesses within the same bank group
+                bankStates[rank][i].nextActivate = max(currentClockCycle + tRRDL, 
+                    bankStates[rank][i].nextActivate);
+              else
+                // Accesses to different bank groups
+                bankStates[rank][i].nextActivate = max(currentClockCycle + tRRDS, 
+                    bankStates[rank][i].nextActivate);
+            }
+          } else { // BANK_GROUPS_DISABLED
+            if (i != poppedBusPacket->bank)
+              bankStates[rank][i].nextActivate = max(currentClockCycle + tRRDS, 
+                  bankStates[rank][i].nextActivate);
+          }
         }
         break;
 
