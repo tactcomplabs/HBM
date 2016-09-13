@@ -45,7 +45,9 @@ unsigned sliceLowerBits(uint64_t& addr, unsigned bits)
 void addressMapping(uint64_t addr, unsigned &chn, unsigned &rnk, unsigned &bnk, unsigned &row, 
     unsigned &col)
 {
-  //uint64_t addr_old = addr;
+#ifdef DEBUG_BUILD
+  uint64_t addr_old = addr;
+#endif
 
   unsigned tx_size = TRANSACTION_SIZE;
   unsigned tx_bits = log2(tx_size);

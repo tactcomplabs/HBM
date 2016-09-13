@@ -54,11 +54,11 @@ Transaction::Transaction(const Transaction &t) :
 ostream &operator<<(ostream &os, const Transaction &t)
 {
   if (t.transactionType == DATA_READ)
-    os<<"T [Read] [0x" << hex << t.address << "]" << dec <<endl;
+    os << "T [Read] [0x" << hex << t.address << "]" << dec << endl;
   else if (t.transactionType == DATA_WRITE)
-    os<<"T [Write] [0x" << hex << t.address << "] [" << dec << t.data << "]" <<endl;
+    os << "T [Write] [0x" << hex << t.address << "] [" << dec << t.data << "]" << endl;
   else if (t.transactionType == RETURN_DATA)
-    os<<"T [Data] [0x" << hex << t.address << "] [" << dec << t.data << "]" <<endl;
+    os << "T [Data] [0x" << hex << t.address << "] [" << dec << t.data << "]" << endl;
   return os; 
 }
 

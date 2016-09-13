@@ -49,9 +49,12 @@ MemoryController::MemoryController(unsigned sid, unsigned cid, MemorySystem *par
 {
   parentMemorySystem = parent;
   
-  // outgoingCmdPacket represents a shared command bus between ranks, or pseudo channels.
-  outgoingCmdPacket = NULL;
-  cmdCyclesLeft = 0;
+  // outgoingRowCmdPacket and outgoingColCmdPacket represent shared row and column command bus 
+  // between ranks, or pseudo channels.
+  outgoingRowCmdPacket = NULL;
+  outgoingColCmdPacket = NULL;
+  rowCmdCyclesLeft = 0;
+  colCmdCyclesLeft = 0;
 
   // outgoingDataPackets represent per-pseudo-channel I/Os for write
   outgoingDataPackets.reserve(NUM_RANKS);
@@ -156,12 +159,21 @@ void MemoryController::update()
 {
   updateBankStates();
 
-  // check for outgoing command packets and handle countdowns
-  if (outgoingCmdPacket != NULL) {
-    cmdCyclesLeft--;
-    if (cmdCyclesLeft == 0) { // packet is ready to be received by rank
-      (*ranks)[outgoingCmdPacket->rank]->receiveFromBus(outgoingCmdPacket);
-      outgoingCmdPacket = NULL;
+  // check for outgoing row command packets and handle countdowns
+  if (outgoingRowCmdPacket != NULL) {
+    rowCmdCyclesLeft--;
+    if (rowCmdCyclesLeft == 0) { // packet is ready to be received by rank
+      (*ranks)[outgoingRowCmdPacket->rank]->receiveFromBus(outgoingRowCmdPacket);
+      outgoingRowCmdPacket = NULL;
+    }
+  }
+
+  // check for outgoing column command packets and handle countdowns
+  if (outgoingColCmdPacket != NULL) {
+    colCmdCyclesLeft--;
+    if (colCmdCyclesLeft == 0) { // packet is ready to be received by rank
+      (*ranks)[outgoingColCmdPacket->rank]->receiveFromBus(outgoingColCmdPacket);
+      outgoingColCmdPacket = NULL;
     }
   }
 
@@ -184,7 +196,7 @@ void MemoryController::update()
 
             LatencyBreakdown &lbd = *it;
             DEBUG("[" << stackID << "][" << channelID << "] addr:" << hex << 
-                " 0x" << outgoingDataPacket[i]->physicalAddress << dec << 
+                " 0x" << outgoingDataPackets[i]->physicalAddress << dec << 
                 " timeAddedToTransactionQueue: " << lbd.timeAddedToTransactionQueue <<
                 " timeAddedToCommandQueue: " << lbd.timeAddedToCommandQueue <<
                 " timeScheduled: " << lbd.timeScheduled <<
@@ -310,6 +322,14 @@ void MemoryController::update()
           bankStates[rank][bank].nextRead = bankStates[rank][bank].nextActivate;
           bankStates[rank][bank].nextWrite = bankStates[rank][bank].nextActivate;
         }
+
+        if (outgoingColCmdPacket != NULL) {
+          ERROR("[" << stackID << "][" << channelID << "] cycle:" << currentClockCycle << " Error - command bus collision");
+          exit(-1);
+        }
+
+        outgoingColCmdPacket = poppedBusPacket;
+        colCmdCyclesLeft = tCMD;
         break;
 
       case WRITE_P:
@@ -366,6 +386,14 @@ void MemoryController::update()
           bankStates[rank][bank].nextRead = bankStates[rank][bank].nextActivate;
           bankStates[rank][bank].nextWrite = bankStates[rank][bank].nextActivate;
         }
+
+        if (outgoingColCmdPacket != NULL) {
+          ERROR("[" << stackID << "][" << channelID << "] cycle:" << currentClockCycle << " Error - command bus collision");
+          exit(-1);
+        }
+
+        outgoingColCmdPacket = poppedBusPacket;
+        colCmdCyclesLeft = tCMD;
         break;
 
       case ACTIVATE:
@@ -401,6 +429,14 @@ void MemoryController::update()
                   bankStates[rank][i].nextActivate);
           }
         }
+
+        if (outgoingRowCmdPacket != NULL) {
+          ERROR("[" << stackID << "][" << channelID << "] cycle:" << currentClockCycle << " Error - command bus collision");
+          exit(-1);
+        }
+
+        outgoingRowCmdPacket = poppedBusPacket;
+        rowCmdCyclesLeft = tCMD;
         break;
 
       case PRECHARGE:
@@ -409,6 +445,14 @@ void MemoryController::update()
         bankStates[rank][bank].stateChangeCountdown = tRP;
         bankStates[rank][bank].nextActivate = max(currentClockCycle + tRP,
             bankStates[rank][bank].nextActivate);
+
+        if (outgoingRowCmdPacket != NULL) {
+          ERROR("[" << stackID << "][" << channelID << "] cycle:" << currentClockCycle << " Error - command bus collision");
+          exit(-1);
+        }
+
+        outgoingRowCmdPacket = poppedBusPacket;
+        rowCmdCyclesLeft = tCMD;
         break;
 
       case REFRESH:
@@ -418,21 +462,20 @@ void MemoryController::update()
           bankStates[rank][i].lastCommand = REFRESH;
           bankStates[rank][i].stateChangeCountdown = tRFC;
         }
+
+        if (outgoingRowCmdPacket != NULL) {
+          ERROR("[" << stackID << "][" << channelID << "] cycle:" << currentClockCycle << " Error - command bus collision");
+          exit(-1);
+        }
+
+        outgoingRowCmdPacket = poppedBusPacket;
+        rowCmdCyclesLeft = tCMD;
         break;
 
       default:
         ERROR("== Error - command we shouldn't have of type : " << poppedBusPacket->busPacketType);
         exit(0);
     }
-
-    //check for collision on bus
-    if (outgoingCmdPacket != NULL) {
-      ERROR("[" << stackID << "][" << channelID << "] cycle:" << currentClockCycle << " Error - command bus collision");
-      exit(-1);
-    }
-
-    outgoingCmdPacket = poppedBusPacket;
-    cmdCyclesLeft = tCMD;
 
 #ifdef DEBUG_LATENCY
     deque<LatencyBreakdown> &dq = latencyBreakdowns[poppedBusPacket->physicalAddress];
@@ -457,7 +500,8 @@ void MemoryController::update()
     if (commandQueue.hasRoomFor(2, newRank)) {
       if (DEBUG_ADDR_MAP) {
         PRINTN("[" << stackID << "][" << channelID << "] "); 
-        PRINTN("cycle:" << currentClockCycle << " new transaction 0x" << hex << transaction->getAddress() << dec);
+        PRINTN("cycle:" << currentClockCycle << " new transaction 0x" << hex << 
+            transaction->getAddress() << dec);
         PRINTN((transaction->getTransactionType() == DATA_READ ? " read " : " write "));
         PRINT("ra:" << newRank << " ba:" << newBank << " ro:" << newRow << " co:" << newCol);
       }
@@ -518,14 +562,14 @@ void MemoryController::update()
     for (unsigned i = 0; i < pendingReadTransactions.size(); ++i) {
       if (pendingReadTransactions[i]->getAddress() == returnTransaction[0]->getAddress()) {
 #ifdef DEBUG_LATENCY
-        deque<LatencyBreakdown> &dq = latencyBreakdowns[pendingReadTransactions[i]->address];
+        deque<LatencyBreakdown> &dq = latencyBreakdowns[pendingReadTransactions[i]->getAddress()];
         for (auto it = dq.begin(); it != dq.end(); ++it) {
           if (it->isRead && it->timeReadDone != 0) {
             it->timeReturned = currentClockCycle;
 
             LatencyBreakdown &lbd = *it;
             DEBUG("[" << stackID << "][" << channelID << "] addr:" << hex << 
-                " 0x" << pendingReadTransactions[i]->address << dec << 
+                " 0x" << pendingReadTransactions[i]->getAddress() << dec << 
                 " timeAddedToTransactionQueue: " << lbd.timeAddedToTransactionQueue <<
                 " timeAddedToCommandQueue: " << lbd.timeAddedToCommandQueue <<
                 " timeScheduled: " << lbd.timeScheduled <<
@@ -541,7 +585,7 @@ void MemoryController::update()
         returnReadData(pendingReadTransactions[i]);
         delete pendingReadTransactions[i];
         pendingReadTransactions.erase(pendingReadTransactions.begin()+i);
-        foundMatch=true; 
+        foundMatch = true; 
         break;
       }
     }
@@ -550,6 +594,7 @@ void MemoryController::update()
       ERROR("Can't find a matching transaction for 0x" << hex << returnTransaction[0]->getAddress() << dec);
       abort(); 
     }
+
     delete returnTransaction[0];
     returnTransaction.erase(returnTransaction.begin());
   }
@@ -574,11 +619,12 @@ bool MemoryController::addTransaction(Transaction *trans)
     transactionQueue.push_back(trans);
 
 #ifdef DEBUG_LATENCY
-    LatencyBreakdown lbd(currentClockCycle, (trans->transactionType == DATA_READ));
-    auto it = latencyBreakdowns.find(trans->address);
+    LatencyBreakdown lbd(currentClockCycle, (trans->getTransactionType() == DATA_READ));
+    uint64_t addr = trans->getAddress();
+    auto it = latencyBreakdowns.find(addr);
     if (it == latencyBreakdowns.end()) //not found
-      latencyBreakdowns[trans->address] = deque<LatencyBreakdown>();
-    latencyBreakdowns[trans->address].push_back(lbd);
+      latencyBreakdowns[addr] = deque<LatencyBreakdown>();
+    latencyBreakdowns[addr].push_back(lbd);
 #endif
     return true;
   } else {
@@ -615,23 +661,16 @@ void MemoryController::printStats(bool finalStats)
   uint64_t totalBytesTransferred = totalTransactions * bytesPerTransaction;
   double secondsThisEpoch = (double)cyclesElapsed * tCK * 1E-9;
 
-  // only per rank
-  vector<double> backgroundPower = vector<double>(NUM_RANKS,0.0);
-  vector<double> burstPower = vector<double>(NUM_RANKS,0.0);
-  vector<double> refreshPower = vector<double>(NUM_RANKS,0.0);
-  vector<double> actprePower = vector<double>(NUM_RANKS,0.0);
-  vector<double> averagePower = vector<double>(NUM_RANKS,0.0);
-
   // per bank variables
-  vector<double> averageLatency = vector<double>(NUM_RANKS*NUM_BANKS,0.0);
+  //vector<double> averageLatency = vector<double>(NUM_RANKS*NUM_BANKS,0.0);
   vector<double> bandwidth = vector<double>(NUM_RANKS*NUM_BANKS,0.0);
 
   double totalBandwidth=0.0;
   for (unsigned i = 0; i < NUM_RANKS; ++i) {
-    for (unsigned j = 0; j < NUM_BANKS; j++) {
-      bandwidth[SEQUENTIAL(i,j)] = (((double)(totalReadsPerBank[SEQUENTIAL(i,j)]+totalWritesPerBank[SEQUENTIAL(i,j)]) * (double)bytesPerTransaction)/(1024.0*1024.0*1024.0)) / secondsThisEpoch;
-      averageLatency[SEQUENTIAL(i,j)] = ((float)totalEpochLatency[SEQUENTIAL(i,j)] / (float)(totalReadsPerBank[SEQUENTIAL(i,j)])) * tCK;
-      totalBandwidth+=bandwidth[SEQUENTIAL(i,j)];
+    for (unsigned j = 0; j < NUM_BANKS; ++j) {
+      bandwidth[SEQUENTIAL(i,j)] = (((double)(totalReadsPerBank[SEQUENTIAL(i,j)] + totalWritesPerBank[SEQUENTIAL(i,j)]) * (double)bytesPerTransaction)/(1024.0*1024.0*1024.0)) / secondsThisEpoch;
+      //averageLatency[SEQUENTIAL(i,j)] = ((float)totalEpochLatency[SEQUENTIAL(i,j)] / (float)(totalReadsPerBank[SEQUENTIAL(i,j)])) * tCK;
+      totalBandwidth += bandwidth[SEQUENTIAL(i,j)];
       totalReadsPerRank[i] += totalReadsPerBank[SEQUENTIAL(i,j)];
       totalWritesPerRank[i] += totalWritesPerBank[SEQUENTIAL(i,j)];
     }
@@ -642,8 +681,7 @@ void MemoryController::printStats(bool finalStats)
 
   PRINT("Channel " << parentMemorySystem->channelID << " statistics");
   PRINTN(" Total Return Transactions: " << totalTransactions);
-  PRINT( " (" << totalBytesTransferred << " bytes) aggregate average bandwidth " << totalBandwidth 
-      << "GB/s");
+  PRINT( " (" << totalBytesTransferred << " bytes) aggregate average bandwidth " << totalBandwidth << "GB/s");
 
   //double totalAggregateBandwidth = 0.0;  
   for (unsigned r = 0; r < NUM_RANKS; ++r) {

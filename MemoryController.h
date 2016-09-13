@@ -120,8 +120,10 @@ private:
   vector<Rank*>* ranks;
 
   // these packets are counting down waiting to be transmitted on the "bus"
-  BusPacket* outgoingCmdPacket;
-  unsigned cmdCyclesLeft;
+  BusPacket* outgoingRowCmdPacket;
+  BusPacket* outgoingColCmdPacket;
+  unsigned rowCmdCyclesLeft;
+  unsigned colCmdCyclesLeft;
   vector<BusPacket*> outgoingDataPackets;
   vector<unsigned> dataCyclesLeft;
 
