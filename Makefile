@@ -1,5 +1,5 @@
 CXXFLAGS=-std=c++11 -Wall
-OPTFLAGS=-O3 
+OPTFLAGS=-O3
 
 ifdef DEBUG
 ifeq ($(DEBUG), 1)
@@ -11,6 +11,13 @@ CXXFLAGS+=$(OPTFLAGS)
 STATIC_LIB_NAME := libdramsim.a
 LIB_NAME=libdramsim.so
 LIB_NAME_MACOS=libdramsim.dylib
+
+UNAME_S := $(shell uname -s)
+ifeq ($(UNAME_S),Darwin)
+  LDFLAGS=-g -shared -Wl
+else
+  LDFLAGS=-g -shared -Wl,-soname,$(LIB_NAME)
+endif
 
 SRC = $(wildcard *.cpp)
 OBJ = $(addsuffix .o, $(basename $(SRC)))
@@ -27,7 +34,7 @@ all: ${LIB_NAME}
 
 #   $@ target name, $^ target deps, $< matched pattern
 $(LIB_NAME): $(POBJ)
-	g++ -g -shared -Wl,-soname,$@ -o $@ $^
+	g++ $(LDFLAGS) -o $@ $^
 	@echo "Built $@ successfully"
 
 $(STATIC_LIB_NAME): $(LIB_OBJ)
