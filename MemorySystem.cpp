@@ -117,6 +117,14 @@ bool MemorySystem::addTransaction(bool isWrite, uint64_t addr)
   }
 }
 
+bool MemorySystem::getStats( double *stat, DSIM_STAT metric ){
+  return memoryController->getStats(stat, metric);
+}
+
+bool MemorySystem::getStats( uint64_t *stat, DSIM_STAT metric ){
+  return memoryController->getStats(stat, metric);
+}
+
 void MemorySystem::printStats(bool finalStats)
 {
   memoryController->printStats(finalStats);

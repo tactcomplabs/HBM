@@ -647,6 +647,96 @@ void MemoryController::resetStats()
   }
 }
 
+//retrieves the target 'metric' stat and returns the value as a double in *stat
+bool MemoryController::getStats( double *stat, DSIM_STAT metric ){
+  double totalBandwidth=0.0;
+  uint64_t cyclesElapsed =
+    (currentClockCycle % EPOCH_LENGTH == 0) ? EPOCH_LENGTH : currentClockCycle % EPOCH_LENGTH;
+  unsigned bytesPerTransaction = JEDEC_DATA_BUS_BITS*BL/8;
+  double secondsThisEpoch = (double)cyclesElapsed * tCK * 1E-9;
+  vector<double> bandwidth = vector<double>(NUM_RANKS*NUM_BANKS,0.0);
+
+  switch( metric ){
+  case TOTAL_BANDWIDTH:
+    for (unsigned i = 0; i < NUM_RANKS; ++i) {
+      for (unsigned j = 0; j < NUM_BANKS; ++j) {
+        bandwidth[SEQUENTIAL(i,j)] =
+          (((double)(totalReadsPerBank[SEQUENTIAL(i,j)] +
+                     totalWritesPerBank[SEQUENTIAL(i,j)]) *
+            (double)bytesPerTransaction)/(1024.0*1024.0*1024.0)) /
+          secondsThisEpoch;
+        totalBandwidth += bandwidth[SEQUENTIAL(i,j)];
+      }
+    }
+    *stat = totalBandwidth;
+    return true;
+    break;
+  case TOTAL_TRANSACTIONS:
+  case TOTAL_BYTES_TRANSFERRED:
+  case TOTAL_READS:
+  case TOTAL_WRITES:
+  case PENDING_READ_TRANSACTIONS:
+  case PENDING_RTN_TRANSACTIONS:
+  default:
+    // none of these are double values
+    return false;
+    break;
+  }
+}
+
+//retrieves the target 'metric' stat and returns the value as a uint64_t in *stat
+bool MemoryController::getStats( uint64_t *stat, DSIM_STAT metric ){
+  unsigned bytesPerTransaction = JEDEC_DATA_BUS_BITS*BL/8;
+  uint64_t totalReads = 0x00ull;
+  uint64_t totalWrites = 0x00ull;
+
+  switch( metric ){
+  case TOTAL_BYTES_TRANSFERRED:
+    if (operationMode == PseudoChannelMode)
+      bytesPerTransaction /= 2;
+
+    *stat = (uint64_t)(totalTransactions * bytesPerTransaction);
+    return true;
+    break;
+  case TOTAL_READS:
+    for (unsigned i = 0; i < NUM_RANKS; ++i) {
+      for (unsigned j = 0; j < NUM_BANKS; ++j) {
+        totalReads += totalReadsPerBank[SEQUENTIAL(i,j)];
+        totalWritesPerRank[i] += totalWritesPerBank[SEQUENTIAL(i,j)];
+      }
+    }
+    *stat = totalReads;
+    return true;
+    break;
+  case TOTAL_WRITES:
+    for (unsigned i = 0; i < NUM_RANKS; ++i) {
+      for (unsigned j = 0; j < NUM_BANKS; ++j) {
+        totalWrites += totalWritesPerBank[SEQUENTIAL(i,j)];
+      }
+    }
+    *stat = totalWrites;
+    return true;
+    break;
+  case TOTAL_TRANSACTIONS:
+    *stat = (uint64_t)(transactionQueue.size());
+    return true;
+    break;
+  case PENDING_READ_TRANSACTIONS:
+    *stat = (uint64_t)(pendingReadTransactions.size());
+    return true;
+    break;
+  case PENDING_RTN_TRANSACTIONS:
+    *stat = (uint64_t)(returnTransaction.size());
+    return true;
+    break;
+  case TOTAL_BANDWIDTH:
+  default:
+    // none of these are double values
+    return false;
+    break;
+  }
+}
+
 //prints statistics at the end of an epoch or  simulation
 void MemoryController::printStats(bool finalStats)
 {

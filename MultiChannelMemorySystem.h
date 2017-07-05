@@ -47,6 +47,9 @@ class MultiChannelMemorySystem : public SimulatorObject
     void printStats(bool finalStats=false);
     void RegisterCallbacks(TransactionCompleteCB *readDone, TransactionCompleteCB *writeDone);
 
+    bool getStats( double *stat, DSIM_STAT metric );
+    bool getStats( uint64_t *stat, DSIM_STAT metric );
+
   private:
     unsigned findChannelNumber(uint64_t addr);
 

@@ -37,16 +37,16 @@
 
 using std::string;
 
-namespace DRAMSim 
+namespace DRAMSim
 {
-  class MultiChannelMemorySystem 
+  class MultiChannelMemorySystem
   {
-    public: 
+    public:
       bool addTransaction(bool isWrite, uint64_t addr);
       void update();
       void printStats(bool finalStats);
-      bool willAcceptTransaction(); 
-      bool willAcceptTransaction(uint64_t addr); 
+      bool willAcceptTransaction();
+      bool willAcceptTransaction(uint64_t addr);
 
       void RegisterCallbacks(TransactionCompleteCB *readDone, TransactionCompleteCB *writeDone);
   };

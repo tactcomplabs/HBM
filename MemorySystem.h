@@ -53,6 +53,9 @@ class MemorySystem : public SimulatorObject
     bool WillAcceptTransaction();
     void RegisterCallbacks(Callback_t *readDone, Callback_t *writeDone);
 
+    bool getStats( double *stat, DSIM_STAT metric );
+    bool getStats( uint64_t *stat, DSIM_STAT metric );
+
   public:
     Callback_t* ReturnReadData;
     Callback_t* WriteDataDone;

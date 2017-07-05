@@ -45,6 +45,17 @@
 
 using namespace std;
 
+// stats enumerated types
+typedef enum{
+  TOTAL_TRANSACTIONS,
+  TOTAL_BYTES_TRANSFERRED,
+  TOTAL_BANDWIDTH,
+  TOTAL_READS,
+  TOTAL_WRITES,
+  PENDING_READ_TRANSACTIONS,
+  PENDING_RTN_TRANSACTIONS
+}DSIM_STAT;
+
 namespace DRAMSim
 {
 #ifdef DEBUG_LATENCY
@@ -92,7 +103,11 @@ public:
   void updateBankStates();
   void update();
   void printStats(bool finalStats = false);
-  void resetStats(); 
+  void resetStats();
+
+  // retrieve the target stats entry 'metric' in 'stat'
+  bool getStats( double *stat, DSIM_STAT metric );
+  bool getStats( uint64_t *stat, DSIM_STAT metric );
 
 public:
   vector<Transaction*> transactionQueue;

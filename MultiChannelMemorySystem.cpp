@@ -122,6 +122,34 @@ bool MultiChannelMemorySystem::willAcceptTransaction(uint64_t addr)
   return channels[chan]->WillAcceptTransaction();
 }
 
+bool MultiChannelMemorySystem::getStats( double *stat, DSIM_STAT metric ){
+  double value = 0.;
+  double total = 0.;
+  for (unsigned i = 0; i < NUM_CHANS; ++i){
+    if( channels[i]->getStats( &value, metric ) ){
+      total += value;
+      value = 0.;
+    }else{
+      return false;
+    }
+  }
+  return true;
+}
+
+bool MultiChannelMemorySystem::getStats( uint64_t *stat, DSIM_STAT metric ){
+  uint64_t value = 0.;
+  uint64_t total = 0.;
+  for (unsigned i = 0; i < NUM_CHANS; ++i){
+    if( channels[i]->getStats( &value, metric ) ){
+      total += value;
+      value = 0.;
+    }else{
+      return false;
+    }
+  }
+  return true;
+}
+
 void MultiChannelMemorySystem::printStats(bool finalStats) 
 {
   for (unsigned i = 0; i < NUM_CHANS; ++i) {
