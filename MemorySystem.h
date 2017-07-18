@@ -38,6 +38,7 @@
 #include "Transaction.h"
 #include "Callback.h"
 #include <deque>
+#include "Stats.h"
 
 namespace DRAMSim
 {

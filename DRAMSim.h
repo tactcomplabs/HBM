@@ -34,6 +34,7 @@
 
 #include "Callback.h"
 #include <string>
+#include "Stats.h"
 
 using std::string;
 
@@ -48,7 +49,16 @@ namespace DRAMSim
       bool willAcceptTransaction();
       bool willAcceptTransaction(uint64_t addr);
 
-      void RegisterCallbacks(TransactionCompleteCB *readDone, TransactionCompleteCB *writeDone);
+      void RegisterCallbacks(TransactionCompleteCB *readDone,
+                             TransactionCompleteCB *writeDone,
+                             void (*reportPower)(double bgpower,
+                                                 double burstpower,
+                                                 double refreshpower,
+                                                 double actprepower));
+
+      // SST Statistics
+      bool getStats( double *stat, DSIM_STAT metric );
+      bool getStats( uint64_t *stat, DSIM_STAT metric );
   };
 
   MultiChannelMemorySystem *getMemorySystemInstance(const string &dev, const string &sys, 

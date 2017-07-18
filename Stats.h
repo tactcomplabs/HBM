@@ -2,19 +2,20 @@
 *  Copyright (c) 2010-2011, Elliott Cooper-Balis
 *                             Paul Rosenfeld
 *                             Bruce Jacob
-*                             University of Maryland dramninjas [at] gmail [dot] com
+*                             University of Maryland
+*                             dramninjas [at] gmail [dot] com
 *  All rights reserved.
-*  
+*
 *  Redistribution and use in source and binary forms, with or without
 *  modification, are permitted provided that the following conditions are met:
-*  
+*
 *     * Redistributions of source code must retain the above copyright notice,
 *        this list of conditions and the following disclaimer.
-*  
+*
 *     * Redistributions in binary form must reproduce the above copyright notice,
 *        this list of conditions and the following disclaimer in the documentation
 *        and/or other materials provided with the distribution.
-*  
+*
 *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 *  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 *  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -26,49 +27,18 @@
 *  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *********************************************************************************/
-#include <atomic>
 
-#include "SimulatorObject.h"
-#include "Transaction.h"
-#include "SystemConfiguration.h"
-#include "MemorySystem.h"
-#include "IniReader.h"
-#include "Stats.h"
+#ifndef STATS_H
+#define STATS_H
 
-namespace DRAMSim { 
-class MultiChannelMemorySystem : public SimulatorObject 
-{
-  public: 
-    MultiChannelMemorySystem(const string &dev, const string &sys, const string &pwd, unsigned 
-        megsOfMemory);
-    virtual ~MultiChannelMemorySystem();
-    bool addTransaction(bool isWrite, uint64_t addr);
-    bool willAcceptTransaction(uint64_t addr); 
-    void update();
-    void printStats(bool finalStats=false);
-    void RegisterCallbacks(TransactionCompleteCB *readDone,
-                           TransactionCompleteCB *writeDone,
-                           void (*reportPower)(double bgpower,
-                                               double burstpower,
-                                               double refreshpower,
-                                               double actprepower));
+typedef enum{
+  TOTAL_TRANSACTIONS,
+  TOTAL_BYTES_TRANSFERRED,
+  TOTAL_BANDWIDTH,
+  TOTAL_READS,
+  TOTAL_WRITES,
+  PENDING_READ_TRANSACTIONS,
+  PENDING_RTN_TRANSACTIONS
+}DSIM_STAT;
 
-    // SST Statistics
-    bool getStats( double *stat, DSIM_STAT metric );
-    bool getStats( uint64_t *stat, DSIM_STAT metric );
-
-  private:
-    unsigned findChannelNumber(uint64_t addr);
-
-  private:
-    vector<MemorySystem*> channels; 
-    unsigned stackID;
-    string deviceIniFilename;
-    string systemIniFilename;
-    string pwd;
-    unsigned megsOfMemory; 
-
-  private:
-    static std::atomic<int> stackCount;
-}; //class MultiChannelMemorySystem
-} //namespace DRAMSim
+#endif // STATS_H

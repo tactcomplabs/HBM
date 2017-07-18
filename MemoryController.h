@@ -42,19 +42,9 @@
 #include "BusPacket.h"
 #include "BankState.h"
 #include "Rank.h"
+#include "Stats.h"
 
 using namespace std;
-
-// stats enumerated types
-typedef enum{
-  TOTAL_TRANSACTIONS,
-  TOTAL_BYTES_TRANSFERRED,
-  TOTAL_BANDWIDTH,
-  TOTAL_READS,
-  TOTAL_WRITES,
-  PENDING_READ_TRANSACTIONS,
-  PENDING_RTN_TRANSACTIONS
-}DSIM_STAT;
 
 namespace DRAMSim
 {

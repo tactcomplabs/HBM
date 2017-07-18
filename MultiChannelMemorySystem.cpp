@@ -160,7 +160,11 @@ void MultiChannelMemorySystem::printStats(bool finalStats)
 }
 
 void MultiChannelMemorySystem::RegisterCallbacks(TransactionCompleteCB *readDone, 
-    TransactionCompleteCB *writeDone)
+    TransactionCompleteCB *writeDone,
+    void (*reportPower)(double bgpower,
+                        double burstpower,
+                        double refreshpower,
+                        double actprepower))
 {
   for (auto x: channels) 
     x->RegisterCallbacks(readDone, writeDone);
