@@ -14,8 +14,10 @@ LIB_NAME_MACOS=libdramsim.dylib
 
 UNAME_S := $(shell uname -s)
 ifeq ($(UNAME_S),Darwin)
+  LIB_NAME=libdramsim.dylib
   LDFLAGS=-g -shared -Wl
 else
+  LIB_NAME=libdramsim.so
   LDFLAGS=-g -shared -Wl,-soname,$(LIB_NAME)
 endif
 
