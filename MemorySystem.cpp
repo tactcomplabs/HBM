@@ -162,7 +162,7 @@ void MemorySystem::RegisterCallbacks(Callback_t* readCB, Callback_t* writeCB)
 // Basically just an entry in the symbol table
 extern "C"
 {
-	void libdramsim_is_present(void)
+	void libhbmdramsim_is_present(void)
 	{
 		;
 	}
