@@ -112,6 +112,7 @@ unsigned MultiChannelMemorySystem::findChannelNumber(uint64_t addr)
 bool MultiChannelMemorySystem::addTransaction(bool isWrite, uint64_t addr)
 {
   unsigned chan = findChannelNumber(addr); 
+  //printf( "Injecting request at address 0x%016llx into channel %d\n", addr, chan );
   return channels[chan]->addTransaction(isWrite, addr); 
 }
 
@@ -133,20 +134,22 @@ bool MultiChannelMemorySystem::getStats( double *stat, DSIM_STAT metric ){
       return false;
     }
   }
+  *stat = total;
   return true;
 }
 
 bool MultiChannelMemorySystem::getStats( uint64_t *stat, DSIM_STAT metric ){
-  uint64_t value = 0.;
-  uint64_t total = 0.;
+  uint64_t value = 0x00ull;
+  uint64_t total = 0x00ull;
   for (unsigned i = 0; i < NUM_CHANS; ++i){
     if( channels[i]->getStats( &value, metric ) ){
       total += value;
-      value = 0.;
+      value = 0x00ull;
     }else{
       return false;
     }
   }
+  *stat = total;
   return true;
 }
 

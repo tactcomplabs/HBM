@@ -342,7 +342,11 @@ void IniReader::ReadIniFile(string filename, bool isSystemFile)
   // after system.ini is read
   if (JEDEC_DATA_BUS_BITS > 0) {
     BYTE_OFFSET_WIDTH = log2(PAGE_SIZE / NUM_COLS);
-    TRANSACTION_SIZE = JEDEC_DATA_BUS_BITS / 8 * BL;
+    // DEPRECATED: TRANSACTION_SIZE = JEDEC_DATA_BUS_BITS / 8 * BL;
+    // TRANSACTION_SIZE SHOULD BE 128 bits (CHANNEL WIDTH)
+    // EXCEPT WHEN IN HBM2 (pseudo_channel_mode) WHERE IT IS
+    // 64 bits
+    TRANSACTION_SIZE = 128;
     if (OPERATION_MODE == "pseudo_channel_mode")
       TRANSACTION_SIZE /= 2;
   }
