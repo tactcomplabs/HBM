@@ -40,7 +40,7 @@
 #include <deque>
 #include "Stats.h"
 
-namespace DRAMSim
+namespace HBMDRAMSim
 {
 typedef CallbackBase<void,unsigned,uint64_t,uint64_t> Callback_t;
 class MemorySystem : public SimulatorObject
@@ -68,7 +68,7 @@ class MemorySystem : public SimulatorObject
     vector<Rank *> *ranks;
     deque<Transaction *> pendingTransactions; 
 }; //class MemorySystem
-} //namespace DRAMSim
+} //namespace HBMDRAMSim
 
 #endif
 

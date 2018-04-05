@@ -32,6 +32,8 @@
 
 using namespace std;
 
+namespace HBMDRAMSim
+{
 // these are the values that are extern'd in SystemConfig.h so that they
 // have global scope even though they are set by IniReader
 
@@ -103,8 +105,6 @@ bool DEBUG_POWER;
 
 bool DEBUG_INI_READER=false;
 
-namespace DRAMSim
-{
 RowBufferPolicy rowBufferPolicy;
 SchedulingPolicy schedulingPolicy;
 AddressMappingScheme addressMappingScheme;
@@ -423,4 +423,4 @@ void IniReader::InitEnumsFromStrings()
   }
 }
 
-} // namespace DRAMSim
+} // namespace HBMDRAMSim

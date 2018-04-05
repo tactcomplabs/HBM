@@ -43,7 +43,7 @@
 #include <cstdlib>
 #include "SimulatorObject.h"
 
-using namespace DRAMSim;
+using namespace HBMDRAMSim;
 using namespace std;
 
 void SimulatorObject::step()

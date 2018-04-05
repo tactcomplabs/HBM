@@ -30,7 +30,7 @@
 #ifndef ADDRESS_MAPPING_H
 #define ADDRESS_MAPPING_H
 
-namespace DRAMSim {
+namespace HBMDRAMSim {
   void addressMapping(uint64_t addr, unsigned &chn, unsigned &rnk, unsigned &bnk, unsigned &row, 
       unsigned &col);
 }

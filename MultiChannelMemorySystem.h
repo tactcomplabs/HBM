@@ -35,7 +35,7 @@
 #include "IniReader.h"
 #include "Stats.h"
 
-namespace DRAMSim { 
+namespace HBMDRAMSim { 
 class MultiChannelMemorySystem : public SimulatorObject 
 {
   public: 
@@ -71,4 +71,4 @@ class MultiChannelMemorySystem : public SimulatorObject
   private:
     static std::atomic<int> stackCount;
 }; //class MultiChannelMemorySystem
-} //namespace DRAMSim
+} //namespace HBMDRAMSim

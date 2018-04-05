@@ -39,7 +39,7 @@
 
 using namespace std;
 
-namespace DRAMSim {
+namespace HBMDRAMSim {
 class CommandQueue : public SimulatorObject
 {
   private:
@@ -93,7 +93,7 @@ class CommandQueue : public SimulatorObject
     vector<vector<unsigned>> tFAWCountdown;
     vector<vector<unsigned>> rowAccessCounters;
 }; //class CommandQueue
-} //namespace DRAMSim
+} //namespace HBMDRAMSim
 
 #endif
 

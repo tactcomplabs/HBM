@@ -33,7 +33,7 @@
 
 #include "SystemConfiguration.h"
 
-namespace DRAMSim {
+namespace HBMDRAMSim {
 enum BusPacketType
 {
   READ,
@@ -71,7 +71,7 @@ class BusPacket
     uint64_t physicalAddress;
     void *data;
 }; //class BusPacket
-} //namespace DRAMSim
+} //namespace HBMDRAMSim
 
 #endif
 

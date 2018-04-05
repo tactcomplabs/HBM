@@ -36,7 +36,7 @@
 
 using std::ostream; 
 
-namespace DRAMSim {
+namespace HBMDRAMSim {
 enum TransactionType
 {
   DATA_READ,
@@ -98,7 +98,7 @@ class Transaction
     uint64_t timeAdded;
     uint64_t timeReturned;
 }; //class Transaction
-} //namespace DRAMSim
+} //namespace HBMDRAMSim
 
 #endif
 
