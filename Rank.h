@@ -40,9 +40,9 @@
 #include "BankState.h"
 
 using namespace std;
-using namespace DRAMSim;
+using namespace HBMDRAMSim;
 
-namespace DRAMSim
+namespace HBMDRAMSim
 {
 class MemoryController; //forward declaration
 class Rank : public SimulatorObject

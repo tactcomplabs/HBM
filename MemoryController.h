@@ -46,7 +46,7 @@
 
 using namespace std;
 
-namespace DRAMSim
+namespace HBMDRAMSim
 {
 #ifdef DEBUG_LATENCY
 class LatencyBreakdown

@@ -33,7 +33,7 @@
 
 using namespace std;
 
-namespace DRAMSim {
+namespace HBMDRAMSim {
 
 unsigned sliceLowerBits(uint64_t& addr, unsigned bits)
 {

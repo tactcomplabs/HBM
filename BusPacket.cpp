@@ -30,7 +30,7 @@
 
 #include "BusPacket.h"
 
-using namespace DRAMSim;
+using namespace HBMDRAMSim;
 using namespace std;
 
 BusPacket::BusPacket(BusPacketType packtype, uint64_t physicalAddr, 

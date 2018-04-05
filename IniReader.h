@@ -46,7 +46,7 @@ using namespace std;
 #define DEFINE_BOOL_PARAM(name, paramtype) {#name, &name, BOOL, paramtype, false}
 #define DEFINE_UINT64_PARAM(name, paramtype) {#name, &name, UINT64, paramtype, false}
 
-namespace DRAMSim
+namespace HBMDRAMSim
 {
 
 typedef enum _variableType {STRING, UINT, UINT64, FLOAT, BOOL} varType;

@@ -34,7 +34,7 @@
 #include "SystemConfiguration.h"
 #include "BusPacket.h"
 
-namespace DRAMSim {
+namespace HBMDRAMSim {
 enum CurrentBankState
 {
   Idle,

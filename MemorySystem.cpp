@@ -34,11 +34,12 @@
 
 using namespace std;
 
+namespace HBMDRAMSim {
+
 unsigned NUM_RANKS;
 unsigned NUM_RANKS_LOG;
 unsigned NUM_BANKS_PER_BANKGROUP;
 
-namespace DRAMSim {
 
 MemorySystem::MemorySystem(unsigned sid, unsigned cid) :
   ReturnReadData(NULL), 
@@ -155,7 +156,7 @@ void MemorySystem::RegisterCallbacks(Callback_t* readCB, Callback_t* writeCB)
   WriteDataDone = writeCB;
 }
 
-} /*namespace DRAMSim */
+} /*namespace HBMDRAMSim */
 
 // This function can be used by autoconf AC_CHECK_LIB since
 // apparently it can't detect C++ functions.

@@ -45,7 +45,7 @@
 
 #include <stdint.h>
 
-namespace DRAMSim
+namespace HBMDRAMSim
 {
 class SimulatorObject
 {

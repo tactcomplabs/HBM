@@ -30,7 +30,7 @@
 
 #ifndef STATS_H
 #define STATS_H
-
+namespace HBMDRAMSim {
 typedef enum{
   TOTAL_TRANSACTIONS,
   TOTAL_BYTES_TRANSFERRED,
@@ -40,5 +40,5 @@ typedef enum{
   PENDING_READ_TRANSACTIONS,
   PENDING_RTN_TRANSACTIONS
 }DSIM_STAT;
-
+}
 #endif // STATS_H

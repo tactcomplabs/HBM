@@ -49,6 +49,8 @@
 //
 //Configuration values for the current system
 
+namespace HBMDRAMSim
+{
 
 extern bool DEBUG_TRANS_Q;
 extern bool DEBUG_CMD_Q;
@@ -166,8 +168,6 @@ enum OperationMode
 // set by IniReader.cpp
 
 
-namespace DRAMSim
-{
 typedef void (*returnCallBack_t)(unsigned id, uint64_t addr, uint64_t clockcycle);
 
 extern RowBufferPolicy rowBufferPolicy;
