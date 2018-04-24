@@ -8,16 +8,16 @@ endif
 endif
 CXXFLAGS+=$(OPTFLAGS)
 
-STATIC_LIB_NAME := libdramsim.a
-LIB_NAME=libdramsim.so
-LIB_NAME_MACOS=libdramsim.dylib
+STATIC_LIB_NAME := libhbmdramsim.a
+LIB_NAME=libhbmdramsim.so
+LIB_NAME_MACOS=libhbmdramsim.dylib
 
 UNAME_S := $(shell uname -s)
 ifeq ($(UNAME_S),Darwin)
-  LIB_NAME=libdramsim.dylib
+  LIB_NAME=libhbmdramsim.dylib
   LDFLAGS=-g -shared -Wl
 else
-  LIB_NAME=libdramsim.so
+  LIB_NAME=libhbmdramsim.so
   LDFLAGS=-g -shared -Wl,-soname,$(LIB_NAME)
 endif
 
